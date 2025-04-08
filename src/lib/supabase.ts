@@ -34,20 +34,56 @@ if (!envSupabaseKey) {
   console.warn('Aviso: Usando chave anônima padrão do Supabase porque NEXT_PUBLIC_SUPABASE_ANON_KEY não está definido');
 }
 
+// Log de informações para debug
+console.log('Ambiente: ', process.env.NODE_ENV);
+console.log('Supabase URL: ', supabaseUrl);
+
 // Criar o cliente Supabase com configurações de segurança e tratamento adequado de erros
 export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
   auth: {
     persistSession: true,
     autoRefreshToken: true,
-    detectSessionInUrl: true
+    detectSessionInUrl: true,
+    flowType: 'pkce',
+    storage: globalThis?.localStorage,
+    storageKey: 'turatti-store-auth',
+    debug: process.env.NODE_ENV === 'development'
   },
   global: {
     // Melhor tratamento de erros no nível global
     fetch: (...args) => {
+      // Adiciona um cache buster a cada requisição
+      const [url, config] = args;
+      
+      // Se for uma URL string e não um objeto Request
+      if (typeof url === 'string') {
+        const separator = url.includes('?') ? '&' : '?';
+        const newUrl = `${url}${separator}_t=${Date.now()}`;
+        args[0] = newUrl;
+      }
+      
+      // Adicionar headers anti-cache
+      if (config && typeof config === 'object') {
+        config.headers = {
+          ...config.headers,
+          'Cache-Control': 'no-cache, no-store, must-revalidate, max-age=0',
+          'Pragma': 'no-cache',
+          'Expires': '0'
+        };
+      }
+      
       return fetch(...args).catch(error => {
         console.error('Erro na requisição Supabase:', error);
         throw error;
       });
+    }
+  },
+  db: {
+    schema: 'public',
+  },
+  realtime: {
+    params: {
+      eventsPerSecond: 10
     }
   }
 });

@@ -5,9 +5,12 @@ import { Product, ColorCollection, Color, Store, ProductImage, Banner, Seller } 
 export const productService = {
   // Buscar todos os produtos
   async getAll(): Promise<Product[]> {
+    // Adicionar cache buster na query para evitar cache
+    const cacheBuster = new Date().getTime();
     const { data, error } = await supabase
       .from('products')
-      .select('*, product_images(*)');
+      .select('*, product_images(*)')
+      .order('updated_at', { ascending: false });
     
     if (error) {
       console.error('Erro ao buscar produtos:', error);
@@ -15,7 +18,7 @@ export const productService = {
     }
     
     // Converter nomes de campos de snake_case para camelCase
-    return data.map(item => ({
+    return data.map((item: any) => ({
       id: item.id,
       name: item.name,
       price: item.price,
@@ -309,6 +312,13 @@ export const productService = {
   // Upload de imagem para o Storage do Supabase
   async uploadImage(file: File): Promise<string | null> {
     try {
+      // Primeiro, obter a sessão atual para o token de autenticação
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData.session) {
+        console.error('Erro: Usuário não autenticado para fazer upload de arquivo');
+        throw new Error('Você precisa estar autenticado para fazer upload de imagens');
+      }
+      
       // Limpar o nome do arquivo e remover caracteres especiais
       const originalName = file.name.replace(/[^a-zA-Z0-9.]/g, '_');
       const fileExt = originalName.split('.').pop()?.toLowerCase() || 'jpg';
@@ -326,7 +336,7 @@ export const productService = {
         .upload(fileName, file, {
           cacheControl: '3600',
           upsert: true,
-          contentType: file.type // Definir explicitamente o tipo de conteúdo
+          contentType: file.type, // Definir explicitamente o tipo de conteúdo
         });
       
       if (error) {
@@ -355,21 +365,27 @@ export const productService = {
   // Processar imagem para criar versões em diferentes tamanhos
   async processImage(file: File): Promise<ProductImage | null> {
     try {
+      // Verificar se o usuário está autenticado
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData.session) {
+        throw new Error('Você precisa estar autenticado para processar imagens. Faça login e tente novamente.');
+      }
+      
       // Validar tipo de arquivo
       if (!file.type.startsWith('image/')) {
-        throw new Error('Apenas imagens são permitidas');
+        throw new Error('Apenas imagens são permitidas. Selecione um arquivo PNG, JPG ou GIF.');
       }
       
       // Validar tamanho máximo (10MB)
       const MAX_SIZE = 10 * 1024 * 1024;
       if (file.size > MAX_SIZE) {
-        throw new Error('Tamanho máximo permitido: 10MB');
+        throw new Error(`Tamanho máximo permitido: 10MB. Arquivo atual: ${(file.size / (1024 * 1024)).toFixed(2)}MB`);
       }
       
       // Upload da imagem (mesma URL para todos os tamanhos por enquanto)
       const imageUrl = await this.uploadImage(file);
       if (!imageUrl) {
-        throw new Error('Falha ao fazer upload da imagem');
+        throw new Error('Falha ao fazer upload da imagem. Verifique sua conexão e permissões.');
       }
       
       // Por enquanto, usamos a mesma URL para todas as versões
@@ -382,9 +398,11 @@ export const productService = {
       };
     } catch (error) {
       if (error instanceof Error) {
+        console.error('Erro ao processar imagem:', error.message);
         throw new Error(error.message);
       }
-      throw new Error('Erro desconhecido ao processar imagem');
+      console.error('Erro desconhecido ao processar imagem');
+      throw new Error('Erro desconhecido ao processar imagem. Tente novamente mais tarde.');
     }
   }
 };
@@ -393,30 +411,27 @@ export const productService = {
 export const collectionService = {
   // Buscar todas as coleções
   async getAll(): Promise<ColorCollection[]> {
+    // Adicionar cache buster na query para evitar cache
+    const cacheBuster = new Date().getTime();
     const { data, error } = await supabase
       .from('color_collections')
-      .select('*');
+      .select('*')
+      .order('updated_at', { ascending: false });
     
     if (error) {
-      console.error('Erro ao buscar coleções:', error);
+      console.error('Erro ao buscar coleções de cores:', error);
       return [];
     }
     
-    console.log('Dados brutos das coleções:', data);
-    
     // Converter nomes de campos de snake_case para camelCase
-    const collections = data.map(item => ({
+    return data.map((item: any) => ({
       id: item.id,
       name: item.name,
-      representativeColor: item.representative_color,
       description: item.description,
+      representativeColor: item.representative_color,
       createdAt: item.created_at,
       updatedAt: item.updated_at
     })) as ColorCollection[];
-    
-    console.log('Coleções convertidas:', collections);
-    
-    return collections;
   },
 
   // Buscar uma coleção pelo ID
@@ -525,9 +540,12 @@ export const collectionService = {
 export const colorService = {
   // Buscar todas as cores
   async getAll(): Promise<Color[]> {
+    // Adicionar cache buster na query para evitar cache
+    const cacheBuster = new Date().getTime();
     const { data, error } = await supabase
       .from('colors')
-      .select('*');
+      .select('*')
+      .order('updated_at', { ascending: false });
     
     if (error) {
       console.error('Erro ao buscar cores:', error);
@@ -535,11 +553,12 @@ export const colorService = {
     }
     
     // Converter nomes de campos de snake_case para camelCase
-    return data.map(item => ({
+    return data.map((item: any) => ({
       id: item.id,
       name: item.name,
+      code: item.code,
       collectionId: item.collection_id,
-      hexCode: item.hex_code,
+      hexValue: item.hex_value,
       createdAt: item.created_at,
       updatedAt: item.updated_at
     })) as Color[];
@@ -547,10 +566,13 @@ export const colorService = {
 
   // Buscar cores por coleção
   async getByCollection(collectionId: string): Promise<Color[]> {
+    // Adicionar cache buster na query para evitar cache
+    const cacheBuster = new Date().getTime();
     const { data, error } = await supabase
       .from('colors')
       .select('*')
-      .eq('collection_id', collectionId);
+      .eq('collection_id', collectionId)
+      .order('updated_at', { ascending: false });
     
     if (error) {
       console.error(`Erro ao buscar cores da coleção ${collectionId}:`, error);
@@ -558,11 +580,12 @@ export const colorService = {
     }
     
     // Converter nomes de campos de snake_case para camelCase
-    return data.map(item => ({
+    return data.map((item: any) => ({
       id: item.id,
       name: item.name,
+      code: item.code,
       collectionId: item.collection_id,
-      hexCode: item.hex_code,
+      hexValue: item.hex_value,
       createdAt: item.created_at,
       updatedAt: item.updated_at
     })) as Color[];
@@ -895,29 +918,104 @@ export const storeService = {
 export const authService = {
   // Login com email e senha
   async login(email: string, password: string) {
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    
-    if (error) {
-      console.error('Erro ao fazer login:', error);
-      return { success: false, error };
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      
+      if (error) {
+        console.error('Erro ao fazer login:', error);
+        return { 
+          success: false, 
+          error,
+          message: error.message === 'Invalid login credentials' 
+            ? 'Credenciais inválidas. Verifique seu e-mail e senha.' 
+            : error.message 
+        };
+      }
+      
+      if (!data.session) {
+        return {
+          success: false,
+          error: new Error('Sessão não criada'),
+          message: 'Não foi possível criar uma sessão. Tente novamente.'
+        };
+      }
+      
+      // Log de depuração
+      console.log('Login bem-sucedido. Token expira em:', new Date(data.session.expires_at! * 1000).toLocaleString());
+      
+      // Tentar persistir manualmente a sessão no localStorage
+      try {
+        localStorage.setItem('turatti-store-auth-token', data.session.access_token);
+        localStorage.setItem('turatti-store-auth-expires', String(data.session.expires_at));
+      } catch (storageError) {
+        console.warn('Não foi possível salvar o token no localStorage:', storageError);
+      }
+      
+      return { success: true, session: data.session };
+    } catch (error) {
+      console.error('Erro inesperado ao fazer login:', error);
+      return { 
+        success: false, 
+        error, 
+        message: 'Ocorreu um erro ao processar o login. Tente novamente.'
+      };
     }
-    
-    return { success: true, session: data.session };
   },
   
   // Verificar sessão atual
   async getSession() {
-    const { data, error } = await supabase.auth.getSession();
-    
-    if (error) {
-      console.error('Erro ao verificar sessão:', error);
+    try {
+      const { data, error } = await supabase.auth.getSession();
+      
+      if (error) {
+        console.error('Erro ao verificar sessão:', error);
+        return null;
+      }
+      
+      if (data.session) {
+        return data.session;
+      }
+      
+      // Se não houver sessão, tentar recuperar do localStorage
+      if (typeof window !== 'undefined') {
+        try {
+          const token = localStorage.getItem('turatti-store-auth-token');
+          const expires = localStorage.getItem('turatti-store-auth-expires');
+          
+          if (token && expires) {
+            const expiresAt = Number(expires);
+            const now = Math.floor(Date.now() / 1000);
+            
+            // Se o token ainda for válido, tentar usá-lo
+            if (expiresAt > now) {
+              console.log('Restaurando sessão a partir do token armazenado');
+              const { data: sessionData, error: sessionError } = await supabase.auth.setSession({
+                access_token: token,
+                refresh_token: '',
+              });
+              
+              if (!sessionError && sessionData.session) {
+                return sessionData.session;
+              }
+            } else {
+              // Token expirado, limpar
+              localStorage.removeItem('turatti-store-auth-token');
+              localStorage.removeItem('turatti-store-auth-expires');
+            }
+          }
+        } catch (storageError) {
+          console.warn('Erro ao acessar localStorage:', storageError);
+        }
+      }
+      
+      return null;
+    } catch (error) {
+      console.error('Erro inesperado ao verificar sessão:', error);
       return null;
     }
-    
-    return data.session;
   },
   
   // Logout
