@@ -238,24 +238,11 @@ export default function AdminPage() {
         >
           <NotificationBadge count={1} color="green">
             <div className="flex items-center justify-center h-16 w-16 bg-teal-100 text-teal-700 rounded-full mb-4">
-              <svg 
-                className="w-8 h-8" 
-                fill="none" 
-                stroke="currentColor" 
-                viewBox="0 0 24 24" 
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path 
-                  strokeLinecap="round" 
-                  strokeLinejoin="round" 
-                  strokeWidth={2} 
-                  d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-                />
-              </svg>
+              <UsersIcon className="w-8 h-8" />
             </div>
           </NotificationBadge>
           <h2 className="text-xl font-semibold text-gray-800 mb-2 font-inter">Vendedores</h2>
-          <p className="text-gray-600 font-inter">Gerenciar vendedores das lojas físicas.</p>
+          <p className="text-gray-600 font-inter">Gerencie os vendedores das lojas físicas.</p>
           <div className="mt-2">
             <StatusBadge status="novo" size="sm" />
           </div>
@@ -424,50 +411,49 @@ export default function AdminPage() {
           </div>
         )}
 
-        {/* Última linha de cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Card de Vendedores */}
-          <Link
-            href="/admin/sellers"
-            className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow"
-          >
-            <div className="flex flex-col items-center">
-              <UsersIcon className="w-12 h-12 text-teal-600 mb-3" />
-              <h2 className="text-xl font-semibold text-gray-800 mb-1">Vendedores</h2>
-              <p className="text-gray-600 text-center">
-                Gerencie os vendedores das lojas físicas.
-              </p>
+        {/* Card de Vendedores */}
+        <Link
+          href="/admin/sellers"
+          className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition duration-300"
+        >
+          <NotificationBadge count={1} color="green">
+            <div className="flex items-center justify-center h-16 w-16 bg-teal-100 text-teal-700 rounded-full mb-4">
+              <UsersIcon className="w-8 h-8" />
             </div>
-          </Link>
+          </NotificationBadge>
+          <h2 className="text-xl font-semibold text-gray-800 mb-2 font-inter">Vendedores</h2>
+          <p className="text-gray-600 font-inter">Gerencie os vendedores das lojas físicas.</p>
+          <div className="mt-2">
+            <StatusBadge status="novo" size="sm" />
+          </div>
+        </Link>
 
-          {/* Card de Diagnóstico */}
-          <Link
-            href="/admin/diagnostic"
-            className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow"
-          >
-            <div className="flex flex-col items-center">
-              <LifeBuoyIcon className="w-12 h-12 text-blue-600 mb-3" />
-              <h2 className="text-xl font-semibold text-gray-800 mb-1">Diagnóstico</h2>
-              <p className="text-gray-600 text-center">
-                Verifique e configure o estado do sistema.
-              </p>
-            </div>
-          </Link>
-          
-          {/* Card de Status */}
-          <Link
-            href="/admin/status"
-            className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow"
-          >
-            <div className="flex flex-col items-center">
-              <SettingsIcon className="w-12 h-12 text-blue-600 mb-3" />
-              <h2 className="text-xl font-semibold text-gray-800 mb-1">Status</h2>
-              <p className="text-gray-600 text-center">
-                Visualize o estado atual do sistema.
-              </p>
-            </div>
-          </Link>
-        </div>
+        {/* Card de Diagnóstico */}
+        <Link
+          href="/admin/diagnostic"
+          className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition duration-300"
+        >
+          <div className="flex items-center justify-center h-16 w-16 bg-indigo-100 text-indigo-700 rounded-full mb-4">
+            <LifeBuoyIcon className="w-8 h-8" />
+          </div>
+          <h2 className="text-xl font-semibold text-gray-800 mb-2 font-inter">Diagnóstico</h2>
+          <p className="text-gray-600 font-inter">Verifique e configure o estado do sistema.</p>
+        </Link>
+        
+        {/* Card de Status */}
+        <Link
+          href="/admin/status"
+          className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition duration-300"
+        >
+          <div className="flex items-center justify-center h-16 w-16 bg-purple-100 text-purple-700 rounded-full mb-4">
+            <SettingsIcon className="w-8 h-8" />
+          </div>
+          <h2 className="text-xl font-semibold text-gray-800 mb-2 font-inter">Status</h2>
+          <p className="text-gray-600 font-inter">Visualize o estado atual do sistema.</p>
+          <div className="mt-2">
+            <StatusBadge status="destaque" variant="dot" size="sm" />
+          </div>
+        </Link>
       </div>
     </div>
   );

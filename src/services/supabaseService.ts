@@ -700,31 +700,41 @@ export const storeService = {
 
   // Buscar lojas ativas
   async getActive(): Promise<Store[]> {
-    await this.checkAndInitializeStoresTable();
-    
-    const { data, error } = await supabase
-      .from('stores')
-      .select('*')
-      .eq('is_active', true)
-      .order('name');
-    
-    if (error) {
-      console.error('Erro ao buscar lojas ativas:', error);
+    try {
+      await this.checkAndInitializeStoresTable();
+      
+      const { data, error } = await supabase
+        .from('stores')
+        .select('*')
+        .eq('is_active', true)
+        .order('name');
+      
+      if (error) {
+        console.error('Erro ao buscar lojas ativas:', error);
+        return [];
+      }
+      
+      if (!data || !Array.isArray(data)) {
+        console.error('Dados de lojas inválidos:', data);
+        return [];
+      }
+      
+      // Converter nomes de campos de snake_case para camelCase
+      return data.map(item => ({
+        id: item.id,
+        name: item.name,
+        city: item.city,
+        phone: item.phone,
+        hours: item.hours,
+        iconUrl: item.icon_url,
+        isActive: true,
+        createdAt: item.created_at,
+        updatedAt: item.updated_at
+      })) as Store[];
+    } catch (error) {
+      console.error('Exceção ao buscar lojas ativas:', error);
       return [];
     }
-    
-    // Converter nomes de campos de snake_case para camelCase
-    return data.map(item => ({
-      id: item.id,
-      name: item.name,
-      city: item.city,
-      phone: item.phone,
-      hours: item.hours,
-      iconUrl: item.icon_url,
-      isActive: true,
-      createdAt: item.created_at,
-      updatedAt: item.updated_at
-    })) as Store[];
   },
 
   // Buscar uma loja pelo ID
@@ -1381,30 +1391,45 @@ export const sellerService = {
 
   // Buscar vendedores por loja
   async getByStore(storeId: string): Promise<Seller[]> {
-    await this.checkAndInitializeSellersTable();
-    
-    const { data, error } = await supabase
-      .from('sellers')
-      .select('*')
-      .eq('store_id', storeId)
-      .eq('is_active', true) // Apenas vendedores ativos
-      .order('name');
-    
-    if (error) {
-      console.error(`Erro ao buscar vendedores da loja ${storeId}:`, error);
+    try {
+      await this.checkAndInitializeSellersTable();
+      
+      if (!storeId) {
+        console.error('ID da loja inválido ou não fornecido');
+        return [];
+      }
+      
+      const { data, error } = await supabase
+        .from('sellers')
+        .select('*')
+        .eq('store_id', storeId)
+        .eq('is_active', true) // Apenas vendedores ativos
+        .order('name');
+      
+      if (error) {
+        console.error(`Erro ao buscar vendedores da loja ${storeId}:`, error);
+        return [];
+      }
+      
+      if (!data || !Array.isArray(data)) {
+        console.error('Dados de vendedores inválidos:', data);
+        return [];
+      }
+      
+      // Converter de snake_case para camelCase
+      return data.map(item => ({
+        id: item.id,
+        name: item.name,
+        storeId: item.store_id,
+        whatsapp: item.whatsapp || '',
+        isActive: true,
+        createdAt: item.created_at,
+        updatedAt: item.updated_at
+      })) as Seller[];
+    } catch (error) {
+      console.error(`Exceção ao buscar vendedores da loja ${storeId}:`, error);
       return [];
     }
-    
-    // Converter de snake_case para camelCase
-    return data.map(item => ({
-      id: item.id,
-      name: item.name,
-      storeId: item.store_id,
-      whatsapp: item.whatsapp,
-      isActive: true,
-      createdAt: item.created_at,
-      updatedAt: item.updated_at
-    })) as Seller[];
   },
 
   // Buscar um vendedor pelo ID

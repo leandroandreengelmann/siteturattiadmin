@@ -34,11 +34,20 @@ if (!envSupabaseKey) {
   console.warn('Aviso: Usando chave anônima padrão do Supabase porque NEXT_PUBLIC_SUPABASE_ANON_KEY não está definido');
 }
 
-// Criar o cliente Supabase com configurações de segurança e opções adicionais
+// Criar o cliente Supabase com configurações de segurança e tratamento adequado de erros
 export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
   auth: {
     persistSession: true,
     autoRefreshToken: true,
     detectSessionInUrl: true
+  },
+  global: {
+    // Melhor tratamento de erros no nível global
+    fetch: (...args) => {
+      return fetch(...args).catch(error => {
+        console.error('Erro na requisição Supabase:', error);
+        throw error;
+      });
+    }
   }
 });

@@ -103,6 +103,8 @@ export interface Database {
           city: string
           phone: string
           hours: string | null
+          icon_url: string | null
+          is_active: boolean | null
           created_at: string
           updated_at: string | null
         }
@@ -112,6 +114,8 @@ export interface Database {
           city: string
           phone: string
           hours?: string | null
+          icon_url?: string | null
+          is_active?: boolean | null
           created_at?: string
           updated_at?: string | null
         }
@@ -121,6 +125,37 @@ export interface Database {
           city?: string
           phone?: string
           hours?: string | null
+          icon_url?: string | null
+          is_active?: boolean | null
+          created_at?: string
+          updated_at?: string | null
+        }
+      }
+      sellers: {
+        Row: {
+          id: string
+          name: string
+          store_id: string
+          whatsapp: string
+          is_active: boolean | null
+          created_at: string
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          name: string
+          store_id: string
+          whatsapp: string
+          is_active?: boolean | null
+          created_at?: string
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          name?: string
+          store_id?: string
+          whatsapp?: string
+          is_active?: boolean | null
           created_at?: string
           updated_at?: string | null
         }

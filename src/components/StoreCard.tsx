@@ -1,64 +1,44 @@
 "use client";
 
-import Image from 'next/image';
 import { Store } from '@/data/types';
-import { BuildingIcon, ShoppingBagIcon } from '@/components/Icons';
+import { X } from 'lucide-react';
 
 interface StoreCardProps {
   store: Store;
   onClick: (store: Store) => void;
+  onClose?: () => void;
 }
 
-export default function StoreCard({ store, onClick }: StoreCardProps) {
-  // Função para determinar a cor de fundo do ícone baseada no nome da loja
-  const getIconBackgroundColor = (name: string) => {
-    // Uma lista de cores que serão usadas para diferentes lojas
-    const colors = [
-      'bg-blue-500', // Azul
-      'bg-green-500', // Verde
-      'bg-purple-500', // Roxo
-      'bg-yellow-500', // Amarelo
-      'bg-red-500', // Vermelho
-      'bg-indigo-500', // Índigo
-      'bg-pink-500', // Rosa
-      'bg-teal-500' // Teal
-    ];
-    
-    // Escolher uma cor baseada na primeira letra do nome
-    const letterIndex = name.charCodeAt(0) % colors.length;
-    return colors[letterIndex];
-  };
-
-  // Determinar qual ícone usar com base no nome da loja
-  const getStoreIcon = (name: string) => {
-    // Se contém "peixoto" no nome, usa ShoppingBagIcon, caso contrário usa BuildingIcon
-    return name.toLowerCase().includes('peixoto') ? 
-      <ShoppingBagIcon className="w-8 h-8 text-white" /> : 
-      <BuildingIcon className="w-8 h-8 text-white" />;
-  };
-
+export default function StoreCard({ store, onClick, onClose }: StoreCardProps) {
   return (
-    <div 
-      className="bg-white rounded-lg shadow-md p-4 cursor-pointer hover:shadow-xl transition-shadow duration-300 flex flex-col items-center"
-      onClick={() => onClick(store)}
-    >
-      <div className="w-16 h-16 mb-2 relative overflow-hidden rounded-full">
-        {store.iconUrl && store.iconUrl.length > 0 ? (
-          <Image
-            src={store.iconUrl}
-            alt={`Loja ${store.name}`}
-            fill
-            sizes="64px"
-            className="object-cover"
-          />
-        ) : (
-          <div className={`w-full h-full flex items-center justify-center ${getIconBackgroundColor(store.name)}`}>
-            {getStoreIcon(store.name)}
-          </div>
-        )}
+    <div className="relative bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-all duration-300 min-w-[200px]">
+      {onClose && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onClose();
+          }}
+          className="absolute top-2 right-2 z-10 bg-white/70 backdrop-blur-sm rounded-full p-1 text-gray-500 hover:text-red-500 hover:bg-white transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-400"
+          aria-label="Fechar seleção de lojas"
+        >
+          <X size={16} />
+        </button>
+      )}
+      <div 
+        onClick={() => onClick(store)}
+        className="w-full h-full p-6 flex items-center justify-center cursor-pointer hover:bg-blue-50 active:bg-blue-100 transition-colors duration-200"
+        role="button"
+        tabIndex={0}
+        aria-label={`Selecionar loja ${store.name}`}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            onClick(store);
+          }
+        }}
+      >
+        <h3 className="font-semibold text-gray-800 text-center text-lg">{store.name}</h3>
       </div>
-      <h3 className="text-center font-medium text-gray-800">{store.name}</h3>
-      <p className="text-sm text-gray-600 text-center">{store.city}</p>
     </div>
   );
 } 

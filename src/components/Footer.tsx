@@ -132,10 +132,6 @@ export default function Footer() {
             <Link href="/admin" className="text-blue-700 hover:underline">
               Área Administrativa
             </Link>
-            {' • '}
-            <Link href="/status" className="text-blue-700 hover:underline">
-              Status do Sistema
-            </Link>
           </p>
         </div>
       </div>
