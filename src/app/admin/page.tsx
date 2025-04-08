@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useToast } from '@/components/ToastProvider';
 import NotificationBadge from '@/components/NotificationBadge';
 import StatusBadge from '@/components/StatusBadge';
+import { BuildingIcon, UsersIcon, LifeBuoyIcon } from '@/components/Icons';
 
 export default function AdminPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -396,6 +397,51 @@ export default function AdminPage() {
             </div>
           </div>
         )}
+
+        {/* Última linha de cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Card de Configurações */}
+          <Link
+            href="/admin/stores"
+            className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow"
+          >
+            <div className="flex flex-col items-center">
+              <BuildingIcon className="w-12 h-12 text-blue-600 mb-3" />
+              <h2 className="text-xl font-semibold text-gray-800 mb-1">Lojas</h2>
+              <p className="text-gray-600 text-center">
+                Gerencie as lojas físicas da rede.
+              </p>
+            </div>
+          </Link>
+
+          {/* Card de Usuários */}
+          <Link
+            href="/admin/users"
+            className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow"
+          >
+            <div className="flex flex-col items-center">
+              <UsersIcon className="w-12 h-12 text-blue-600 mb-3" />
+              <h2 className="text-xl font-semibold text-gray-800 mb-1">Usuários</h2>
+              <p className="text-gray-600 text-center">
+                Gerencie os usuários administrativos do sistema.
+              </p>
+            </div>
+          </Link>
+
+          {/* Card de Diagnóstico */}
+          <Link
+            href="/admin/diagnostic"
+            className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow"
+          >
+            <div className="flex flex-col items-center">
+              <LifeBuoyIcon className="w-12 h-12 text-blue-600 mb-3" />
+              <h2 className="text-xl font-semibold text-gray-800 mb-1">Diagnóstico</h2>
+              <p className="text-gray-600 text-center">
+                Verifique e configure o estado do sistema.
+              </p>
+            </div>
+          </Link>
+        </div>
       </div>
     </div>
   );
