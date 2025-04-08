@@ -126,12 +126,14 @@ export default function AdminStoresPage() {
     try {
       const { storeService } = await import('@/services/supabaseService');
       
+      // Em vez de usar URLs externas, usamos um valor simples que será usado
+      // para gerar ícones dinâmicos usando a primeira letra do nome da loja
       const storeData = {
         name,
         city,
         phone,
         hours,
-        iconUrl,
+        iconUrl: '', // String vazia em vez de null para compatibilidade com o tipo
         isActive
       };
       
@@ -268,20 +270,6 @@ export default function AdminStoresPage() {
                   onChange={(e) => setHours(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="Segunda a Sábado: 8h às 18h"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-gray-700 mb-2" htmlFor="iconUrl">
-                  URL do Ícone
-                </label>
-                <input
-                  type="url"
-                  id="iconUrl"
-                  value={iconUrl}
-                  onChange={(e) => setIconUrl(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="https://exemplo.com/imagem.jpg"
                 />
               </div>
               

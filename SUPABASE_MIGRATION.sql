@@ -15,7 +15,8 @@ CREATE TABLE IF NOT EXISTS stores (
   icon_url TEXT,
   is_active BOOLEAN DEFAULT TRUE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  CONSTRAINT unique_store_name UNIQUE (name)
 );
 
 -- Adicionar coluna icon_url se não existir
@@ -48,53 +49,176 @@ CREATE TABLE IF NOT EXISTS sellers (
   whatsapp TEXT NOT NULL,
   is_active BOOLEAN DEFAULT TRUE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  CONSTRAINT unique_seller_per_store UNIQUE (name, store_id)
 );
 
 -- 3. Inserir dados de exemplo para lojas (se não existirem)
-INSERT INTO stores (name, city, phone, hours, icon_url, is_active)
-VALUES 
-  ('Turatti Centro', 'Matupá', '(66) 3595-1234', 'Segunda a Sexta: 8h às 18h, Sábado: 8h às 13h', 'https://cdn-icons-png.flaticon.com/512/2449/2449322.png', TRUE),
-  ('Turatti Peixoto', 'Peixoto de Azevedo', '(66) 3575-5678', 'Segunda a Sexta: 8h às 18h, Sábado: 8h às 13h', 'https://cdn-icons-png.flaticon.com/512/3820/3820307.png', TRUE)
-ON CONFLICT (name) DO NOTHING;
+-- Primeiro verificamos se a loja existe
+DO $$
+DECLARE
+  store_count INTEGER;
+BEGIN
+  SELECT COUNT(*) INTO store_count FROM stores WHERE name = 'Turatti Centro';
+  
+  IF store_count = 0 THEN
+    INSERT INTO stores (name, city, phone, hours, icon_url, is_active)
+    VALUES ('Turatti Centro', 'Matupá', '(66) 3595-1234', 'Segunda a Sexta: 8h às 18h, Sábado: 8h às 13h', '', TRUE);
+  END IF;
+  
+  SELECT COUNT(*) INTO store_count FROM stores WHERE name = 'Turatti Peixoto';
+  
+  IF store_count = 0 THEN
+    INSERT INTO stores (name, city, phone, hours, icon_url, is_active)
+    VALUES ('Turatti Peixoto', 'Peixoto de Azevedo', '(66) 3575-5678', 'Segunda a Sexta: 8h às 18h, Sábado: 8h às 13h', '', TRUE);
+  END IF;
+END $$;
 
--- 4. Inserir dados de exemplo para vendedores (com referência às lojas correspondentes)
--- João e Maria para Turatti Centro
-WITH store_centro AS (SELECT id FROM stores WHERE name = 'Turatti Centro' LIMIT 1)
-INSERT INTO sellers (name, store_id, whatsapp, is_active)
-SELECT 'João Silva', id, '5566999991111', TRUE FROM store_centro
-ON CONFLICT (name, store_id) DO NOTHING;
+-- 4. Inserir dados de exemplo para vendedores 
+-- Verificamos primeiro se já existem, para evitar duplicatas
+DO $$
+DECLARE
+  centro_id UUID;
+  peixoto_id UUID;
+  seller_count INTEGER;
+BEGIN
+  -- Obter IDs das lojas
+  SELECT id INTO centro_id FROM stores WHERE name = 'Turatti Centro' LIMIT 1;
+  SELECT id INTO peixoto_id FROM stores WHERE name = 'Turatti Peixoto' LIMIT 1;
+  
+  -- Inserir vendedores para Turatti Centro
+  IF centro_id IS NOT NULL THEN
+    -- João Silva
+    SELECT COUNT(*) INTO seller_count FROM sellers 
+    WHERE name = 'João Silva' AND store_id = centro_id;
+    
+    IF seller_count = 0 THEN
+      INSERT INTO sellers (name, store_id, whatsapp, is_active)
+      VALUES ('João Silva', centro_id, '5566999991111', TRUE);
+    END IF;
+    
+    -- Maria Oliveira
+    SELECT COUNT(*) INTO seller_count FROM sellers 
+    WHERE name = 'Maria Oliveira' AND store_id = centro_id;
+    
+    IF seller_count = 0 THEN
+      INSERT INTO sellers (name, store_id, whatsapp, is_active)
+      VALUES ('Maria Oliveira', centro_id, '5566999992222', TRUE);
+    END IF;
+  END IF;
+  
+  -- Inserir vendedores para Turatti Peixoto
+  IF peixoto_id IS NOT NULL THEN
+    -- Pedro Santos
+    SELECT COUNT(*) INTO seller_count FROM sellers 
+    WHERE name = 'Pedro Santos' AND store_id = peixoto_id;
+    
+    IF seller_count = 0 THEN
+      INSERT INTO sellers (name, store_id, whatsapp, is_active)
+      VALUES ('Pedro Santos', peixoto_id, '5566999993333', TRUE);
+    END IF;
+    
+    -- Ana Souza
+    SELECT COUNT(*) INTO seller_count FROM sellers 
+    WHERE name = 'Ana Souza' AND store_id = peixoto_id;
+    
+    IF seller_count = 0 THEN
+      INSERT INTO sellers (name, store_id, whatsapp, is_active)
+      VALUES ('Ana Souza', peixoto_id, '5566999994444', TRUE);
+    END IF;
+  END IF;
+END $$;
 
-WITH store_centro AS (SELECT id FROM stores WHERE name = 'Turatti Centro' LIMIT 1)
-INSERT INTO sellers (name, store_id, whatsapp, is_active)
-SELECT 'Maria Oliveira', id, '5566999992222', TRUE FROM store_centro
-ON CONFLICT (name, store_id) DO NOTHING;
+-- 5. Adicionar políticas de segurança para acesso às tabelas
+-- Políticas para a tabela stores
+DO $$
+BEGIN
+  -- SELECT policy
+  IF NOT EXISTS (
+    SELECT FROM pg_policies 
+    WHERE tablename = 'stores' AND policyname = 'Allow anonymous select on stores'
+  ) THEN
+    CREATE POLICY "Allow anonymous select on stores" 
+    ON stores FOR SELECT 
+    USING (true);
+  END IF;
+  
+  -- INSERT policy
+  IF NOT EXISTS (
+    SELECT FROM pg_policies 
+    WHERE tablename = 'stores' AND policyname = 'Allow anonymous insert on stores'
+  ) THEN
+    CREATE POLICY "Allow anonymous insert on stores" 
+    ON stores FOR INSERT 
+    WITH CHECK (true);
+  END IF;
+  
+  -- UPDATE policy
+  IF NOT EXISTS (
+    SELECT FROM pg_policies 
+    WHERE tablename = 'stores' AND policyname = 'Allow anonymous update on stores'
+  ) THEN
+    CREATE POLICY "Allow anonymous update on stores" 
+    ON stores FOR UPDATE 
+    USING (true) 
+    WITH CHECK (true);
+  END IF;
+  
+  -- DELETE policy
+  IF NOT EXISTS (
+    SELECT FROM pg_policies 
+    WHERE tablename = 'stores' AND policyname = 'Allow anonymous delete on stores'
+  ) THEN
+    CREATE POLICY "Allow anonymous delete on stores" 
+    ON stores FOR DELETE 
+    USING (true);
+  END IF;
+END $$;
 
--- Pedro e Ana para Turatti Peixoto
-WITH store_peixoto AS (SELECT id FROM stores WHERE name = 'Turatti Peixoto' LIMIT 1)
-INSERT INTO sellers (name, store_id, whatsapp, is_active)
-SELECT 'Pedro Santos', id, '5566999993333', TRUE FROM store_peixoto
-ON CONFLICT (name, store_id) DO NOTHING;
-
-WITH store_peixoto AS (SELECT id FROM stores WHERE name = 'Turatti Peixoto' LIMIT 1)
-INSERT INTO sellers (name, store_id, whatsapp, is_active)
-SELECT 'Ana Souza', id, '5566999994444', TRUE FROM store_peixoto
-ON CONFLICT (name, store_id) DO NOTHING;
-
--- 5. Adicionar políticas de segurança para acesso anônimo às tabelas
--- Política para leitura anônima da tabela stores
-DROP POLICY IF EXISTS "Allow anonymous select on stores" ON stores;
-CREATE POLICY "Allow anonymous select on stores" 
-ON stores FOR SELECT 
-TO anon
-USING (true);
-
--- Política para leitura anônima da tabela sellers
-DROP POLICY IF EXISTS "Allow anonymous select on sellers" ON sellers;
-CREATE POLICY "Allow anonymous select on sellers" 
-ON sellers FOR SELECT 
-TO anon
-USING (true);
+-- Políticas para a tabela sellers
+DO $$
+BEGIN
+  -- SELECT policy
+  IF NOT EXISTS (
+    SELECT FROM pg_policies 
+    WHERE tablename = 'sellers' AND policyname = 'Allow anonymous select on sellers'
+  ) THEN
+    CREATE POLICY "Allow anonymous select on sellers" 
+    ON sellers FOR SELECT 
+    USING (true);
+  END IF;
+  
+  -- INSERT policy
+  IF NOT EXISTS (
+    SELECT FROM pg_policies 
+    WHERE tablename = 'sellers' AND policyname = 'Allow anonymous insert on sellers'
+  ) THEN
+    CREATE POLICY "Allow anonymous insert on sellers" 
+    ON sellers FOR INSERT 
+    WITH CHECK (true);
+  END IF;
+  
+  -- UPDATE policy
+  IF NOT EXISTS (
+    SELECT FROM pg_policies 
+    WHERE tablename = 'sellers' AND policyname = 'Allow anonymous update on sellers'
+  ) THEN
+    CREATE POLICY "Allow anonymous update on sellers" 
+    ON sellers FOR UPDATE 
+    USING (true) 
+    WITH CHECK (true);
+  END IF;
+  
+  -- DELETE policy
+  IF NOT EXISTS (
+    SELECT FROM pg_policies 
+    WHERE tablename = 'sellers' AND policyname = 'Allow anonymous delete on sellers'
+  ) THEN
+    CREATE POLICY "Allow anonymous delete on sellers" 
+    ON sellers FOR DELETE 
+    USING (true);
+  END IF;
+END $$;
 
 -- Habilitar RLS (Row Level Security) nas tabelas
 ALTER TABLE stores ENABLE ROW LEVEL SECURITY;

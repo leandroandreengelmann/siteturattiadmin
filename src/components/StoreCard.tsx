@@ -9,13 +9,32 @@ interface StoreCardProps {
 }
 
 export default function StoreCard({ store, onClick }: StoreCardProps) {
+  // Função para determinar a cor de fundo do ícone baseada no nome da loja
+  const getIconBackgroundColor = (name: string) => {
+    // Uma lista de cores que serão usadas para diferentes lojas
+    const colors = [
+      'bg-blue-500', // Azul
+      'bg-green-500', // Verde
+      'bg-purple-500', // Roxo
+      'bg-yellow-500', // Amarelo
+      'bg-red-500', // Vermelho
+      'bg-indigo-500', // Índigo
+      'bg-pink-500', // Rosa
+      'bg-teal-500' // Teal
+    ];
+    
+    // Escolher uma cor baseada na primeira letra do nome
+    const letterIndex = name.charCodeAt(0) % colors.length;
+    return colors[letterIndex];
+  };
+
   return (
     <div 
       className="bg-white rounded-lg shadow-md p-4 cursor-pointer hover:shadow-xl transition-shadow duration-300 flex flex-col items-center"
       onClick={() => onClick(store)}
     >
       <div className="w-16 h-16 mb-2 relative overflow-hidden rounded-full">
-        {store.iconUrl ? (
+        {store.iconUrl && store.iconUrl.length > 0 ? (
           <Image
             src={store.iconUrl}
             alt={`Loja ${store.name}`}
@@ -24,8 +43,8 @@ export default function StoreCard({ store, onClick }: StoreCardProps) {
             className="object-cover"
           />
         ) : (
-          <div className="bg-gray-200 w-full h-full flex items-center justify-center rounded-full">
-            <span className="text-gray-500 text-xl">{store.name.charAt(0)}</span>
+          <div className={`w-full h-full flex items-center justify-center text-white ${getIconBackgroundColor(store.name)}`}>
+            <span className="text-xl font-bold">{store.name.charAt(0).toUpperCase()}</span>
           </div>
         )}
       </div>
