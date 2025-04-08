@@ -17,6 +17,7 @@ const nextConfig = {
   // Desativar o ESLint durante o build para evitar falhas
   eslint: {
     ignoreDuringBuilds: true,
+    dirs: ['app', 'components', 'lib', 'pages', 'services', 'utils'],
   },
   // Desativar a verificação de tipos TypeScript durante o build
   typescript: {
