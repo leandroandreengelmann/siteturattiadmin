@@ -32,16 +32,21 @@ export default function DiagnosticPage() {
       const dbResponse = await fetch('/api/setup-db');
       const dbData = await dbResponse.json();
       
-      // Em seguida, configurar a autenticação
+      // Em seguida, configurar o armazenamento
+      const storageResponse = await fetch('/api/setup-storage');
+      const storageData = await storageResponse.json();
+      
+      // Por último, configurar a autenticação
       const authResponse = await fetch('/api/setup-auth');
       const authData = await authResponse.json();
       
       setSetupStatus({
         database: dbData,
+        storage: storageData,
         auth: authData
       });
       
-      if (dbData.success || authData.success) {
+      if (dbData.success || authData.success || storageData.success) {
         showToast('Configuração concluída com sucesso!', 'success');
       } else {
         showToast('Erro na configuração. Verifique os detalhes.', 'error');
@@ -50,8 +55,8 @@ export default function DiagnosticPage() {
       // Atualizar os dados de diagnóstico
       await fetchDiagnostic();
     } catch (error) {
-      console.error('Erro ao configurar banco de dados:', error);
-      showToast('Erro ao configurar banco de dados', 'error');
+      console.error('Erro ao configurar sistema:', error);
+      showToast('Erro ao configurar sistema', 'error');
     } finally {
       setIsSettingUp(false);
     }
@@ -197,6 +202,31 @@ export default function DiagnosticPage() {
                 )}
               </div>
               
+              {/* Resultados do armazenamento */}
+              {setupStatus?.storage && (
+                <div className="p-4 border rounded-md">
+                  <h3 className="font-medium mb-2">Armazenamento</h3>
+                  <p>
+                    <span className="font-semibold">Status:</span> {' '}
+                    <span className={`px-2 py-0.5 rounded ${setupStatus.storage.success ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                      {setupStatus.storage.success ? 'Sucesso' : 'Erro'}
+                    </span>
+                  </p>
+                  <p><span className="font-semibold">Mensagem:</span> {setupStatus.storage.message}</p>
+                  
+                  {setupStatus.storage.results && (
+                    <div className="mt-4">
+                      <h4 className="font-medium mb-2">Detalhes:</h4>
+                      <div className="bg-gray-50 p-3 rounded">
+                        <pre className="whitespace-pre-wrap text-xs">
+                          {JSON.stringify(setupStatus.storage.results, null, 2)}
+                        </pre>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+              
               {/* Resultados da autenticação */}
               <div className="p-4 border rounded-md">
                 <h3 className="font-medium mb-2">Autenticação</h3>
@@ -246,6 +276,10 @@ export default function DiagnosticPage() {
                 <li>
                   <span className="font-semibold">Configuração do DB:</span>{' '}
                   <code className="bg-gray-100 px-1 py-0.5 rounded">/api/setup-db</code>
+                </li>
+                <li>
+                  <span className="font-semibold">Configuração de Storage:</span>{' '}
+                  <code className="bg-gray-100 px-1 py-0.5 rounded">/api/setup-storage</code>
                 </li>
                 <li>
                   <span className="font-semibold">Configuração de Auth:</span>{' '}

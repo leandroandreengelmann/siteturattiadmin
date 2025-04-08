@@ -8,16 +8,22 @@ async function getData() {
   try {
     // Buscar dados em paralelo para melhor performance e tolerância a falhas
     const [
+      promotionProductsPromise,
       featuredProductsPromise, 
       colorCollectionsPromise,
       bannersPromise
     ] = await Promise.allSettled([
+      productService.getPromotions(),
       productService.getNonPromotions(),
       collectionService.getAll(),
       bannerService.getActive()
     ]);
     
     // Extrair resultados com fallbacks para evitar quebras
+    const promotionProducts = promotionProductsPromise.status === 'fulfilled' 
+      ? promotionProductsPromise.value 
+      : [];
+      
     const featuredProducts = featuredProductsPromise.status === 'fulfilled' 
       ? featuredProductsPromise.value 
       : [];
@@ -31,6 +37,7 @@ async function getData() {
       : [];
     
     return {
+      promotionProducts,
       featuredProducts,
       colorCollections,
       banners
@@ -39,6 +46,7 @@ async function getData() {
     console.error('Erro ao buscar dados da página inicial:', error);
     // Retornar valores padrão para evitar quebrar a página
     return {
+      promotionProducts: [],
       featuredProducts: [],
       colorCollections: [],
       banners: []
@@ -48,7 +56,7 @@ async function getData() {
 
 export default async function Home() {
   // Buscar dados do Supabase
-  const { featuredProducts, colorCollections, banners } = await getData();
+  const { promotionProducts, featuredProducts, colorCollections, banners } = await getData();
   
   // Obter o primeiro banner ativo, se houver algum
   const firstBanner = banners.length > 0 ? banners[0] : undefined;
@@ -57,6 +65,14 @@ export default async function Home() {
     <div className="min-h-screen">
       {/* Main Banner */}
       <Banner banner={firstBanner} />
+      
+      {/* Promotion Products Carousel - mostrar primeiro */}
+      {promotionProducts.length > 0 && (
+        <ProductCarousel 
+          products={promotionProducts} 
+          title="Promoções do Mês" 
+        />
+      )}
       
       {/* Featured Products Carousel */}
       {featuredProducts.length > 0 && (
