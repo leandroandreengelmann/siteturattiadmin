@@ -126,6 +126,8 @@ export async function GET() {
             city TEXT NOT NULL,
             phone TEXT,
             hours TEXT,
+            icon_url TEXT,
+            is_active BOOLEAN DEFAULT true,
             created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
             updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
           );
@@ -137,6 +139,29 @@ export async function GET() {
         { success: true };
     } catch (err: any) {
       results.tables.stores = { success: false, message: err.message };
+    }
+
+    // Criar tabela de vendedores
+    try {
+      const { error: sellersError } = await supabase.rpc('exec_sql', {
+        query_text: `
+          CREATE TABLE IF NOT EXISTS sellers (
+            id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+            name TEXT NOT NULL,
+            store_id UUID REFERENCES stores(id) ON DELETE CASCADE,
+            whatsapp TEXT NOT NULL,
+            is_active BOOLEAN DEFAULT true,
+            created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+            updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+          );
+        `
+      });
+
+      results.tables.sellers = sellersError ? 
+        { success: false, message: sellersError.message } :
+        { success: true };
+    } catch (err: any) {
+      results.tables.sellers = { success: false, message: err.message };
     }
 
     // Criar tabela de banners
@@ -239,13 +264,17 @@ export async function GET() {
             name: 'Turatti Centro',
             city: 'Matupá',
             phone: '(66) 3595-1234',
-            hours: 'Segunda a Sexta: 8h às 18h, Sábado: 8h às 13h'
+            hours: 'Segunda a Sexta: 8h às 18h, Sábado: 8h às 13h',
+            icon_url: 'https://cdn-icons-png.flaticon.com/512/2449/2449322.png',
+            is_active: true
           },
           {
-            name: 'Turatti Construção',
-            city: 'Matupá',
-            phone: '(66) 3595-5678',
-            hours: 'Segunda a Sexta: 8h às 18h, Sábado: 8h às 13h'
+            name: 'Turatti Peixoto',
+            city: 'Peixoto de Azevedo',
+            phone: '(66) 3575-5678',
+            hours: 'Segunda a Sexta: 8h às 18h, Sábado: 8h às 13h',
+            icon_url: 'https://cdn-icons-png.flaticon.com/512/3820/3820307.png',
+            is_active: true
           }
         ], { onConflict: 'name' })
         .select();
@@ -253,6 +282,50 @@ export async function GET() {
       results.data.stores = storeDataError ? 
         { success: false, message: storeDataError.message } :
         { success: true, count: storeData?.length || 0 };
+        
+      // Inserir vendedores após criar as lojas
+      if (storeData && storeData.length > 0) {
+        // Obter IDs das lojas
+        const storeIds = storeData.reduce((acc, store) => {
+          acc[store.name] = store.id;
+          return acc;
+        }, {} as Record<string, string>);
+        
+        // Inserir vendedores para as lojas
+        const { data: sellerData, error: sellerDataError } = await supabase
+          .from('sellers')
+          .upsert([
+            {
+              name: 'João Silva',
+              store_id: storeIds['Turatti Centro'],
+              whatsapp: '5566999991111',
+              is_active: true
+            },
+            {
+              name: 'Maria Oliveira',
+              store_id: storeIds['Turatti Centro'],
+              whatsapp: '5566999992222',
+              is_active: true
+            },
+            {
+              name: 'Pedro Santos',
+              store_id: storeIds['Turatti Peixoto'],
+              whatsapp: '5566999993333',
+              is_active: true
+            },
+            {
+              name: 'Ana Souza',
+              store_id: storeIds['Turatti Peixoto'],
+              whatsapp: '5566999994444',
+              is_active: true
+            }
+          ], { onConflict: 'name, store_id' })
+          .select();
+          
+        results.data.sellers = sellerDataError ? 
+          { success: false, message: sellerDataError.message } :
+          { success: true, count: sellerData?.length || 0 };
+      }
     } catch (err: any) {
       results.data.stores = { success: false, message: err.message };
     }
