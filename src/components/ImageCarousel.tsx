@@ -17,7 +17,7 @@ export default function ImageCarousel({
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
   
-  // Usando useCallback para corrigir o problema de dependência
+  // Usando useCallback para memoizar a função e evitar recriações desnecessárias
   const goToNext = useCallback(() => {
     setIsTransitioning(true);
     setCurrentIndex((prevIndex) => (prevIndex + 1) % images.length);
@@ -40,7 +40,7 @@ export default function ImageCarousel({
     }, 500);
   }, [images.length]);
   
-  // Auto play effect
+  // Auto play effect - incluindo goToNext como dependência
   useEffect(() => {
     if (!autoPlay) return;
     
@@ -49,7 +49,7 @@ export default function ImageCarousel({
     }, interval);
     
     return () => clearInterval(timer);
-  }, [autoPlay, interval, goToNext]); // Agora incluímos goToNext nas dependências
+  }, [autoPlay, interval, goToNext]); // Incluindo goToNext nas dependências
   
   // Se não houver imagens, não renderize nada
   if (!images || images.length === 0) {
@@ -117,7 +117,7 @@ export default function ImageCarousel({
             className="relative w-full h-full"
             style={{ width: `${100 / images.length}%` }}
           >
-            {/* Usando Image em vez de img */}
+            {/* Usando Next.js Image em vez de img para otimização */}
             <div className="relative w-full h-full">
               <Image
                 src={src}

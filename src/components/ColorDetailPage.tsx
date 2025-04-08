@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 import { Color } from '@/data/types';
 import Image from 'next/image';
 
@@ -9,9 +8,6 @@ interface ColorDetailPageProps {
 }
 
 export default function ColorDetailPage({ color }: ColorDetailPageProps) {
-  // Removi o useState do activeTab que estava causando o erro
-  // const [activeTab, setActiveTab] = useState('details');
-  
   if (!color) {
     return (
       <div className="container mx-auto px-4 py-12">

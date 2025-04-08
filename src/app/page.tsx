@@ -58,7 +58,7 @@ export default async function Home() {
       {/* Main Banner */}
       <Banner banner={firstBanner} />
       
-      {/* Promotion Products Carousel - mostrar primeiro */}
+      {/* Featured Products Carousel */}
       {featuredProducts.length > 0 && (
         <ProductCarousel 
           products={featuredProducts} 
@@ -66,7 +66,7 @@ export default async function Home() {
         />
       )}
       
-      {/* Suvinil Colors Section */}
+      {/* Colors Section */}
       <ColorSection collections={colorCollections} />
 
       {/* Informações adicionais */}

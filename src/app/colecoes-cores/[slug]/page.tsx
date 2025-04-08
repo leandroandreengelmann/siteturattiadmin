@@ -1,8 +1,8 @@
 'use client';
 
-// Importações sem o Link que estava causando o erro
+// Importações ajustadas, removendo o Link não utilizado
 import { useParams } from 'next/navigation';
-import { ColorCollection, Color } from '@/data/types';
+import { Color } from '@/data/types';
 
 export default function ColorCollectionDetailPage() {
   const { slug } = useParams();
