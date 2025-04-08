@@ -3,32 +3,30 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { stores } from '@/data/sampleData';
-import { Store } from '@/data/types';
+import { Seller, Store } from '@/data/types';
 import { useToast } from '@/components/ToastProvider';
 
-export default function AdminStoresPage() {
+export default function AdminSellersPage() {
   const router = useRouter();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [sellersList, setSellersList] = useState<Seller[]>([]);
   const [storesList, setStoresList] = useState<Store[]>([]);
   const [isEditing, setIsEditing] = useState(false);
-  const [currentStore, setCurrentStore] = useState<Store | null>(null);
+  const [currentSeller, setCurrentSeller] = useState<Seller | null>(null);
   const { showToast } = useToast();
   
   // Form state
   const [name, setName] = useState('');
-  const [city, setCity] = useState('');
-  const [phone, setPhone] = useState('');
-  const [hours, setHours] = useState('');
-  const [iconUrl, setIconUrl] = useState('');
+  const [storeId, setStoreId] = useState('');
+  const [whatsapp, setWhatsapp] = useState('');
   const [isActive, setIsActive] = useState(true);
   
-  // Check if user is authenticated and load stores
+  // Check if user is authenticated and load sellers and stores
   useEffect(() => {
     async function init() {
       try {
         // Verificar autenticação com Supabase
-        const { authService, storeService } = await import('@/services/supabaseService');
+        const { authService, sellerService, storeService } = await import('@/services/supabaseService');
         const session = await authService.getSession();
         
         if (!session) {
@@ -39,11 +37,16 @@ export default function AdminStoresPage() {
         
         setIsAuthenticated(true);
         
-        // Carregar lojas do Supabase
-        const storesData = await storeService.getAll();
+        // Carregar vendedores e lojas do Supabase em paralelo
+        const [sellersData, storesData] = await Promise.all([
+          sellerService.getAll(),
+          storeService.getAll()
+        ]);
+        
+        setSellersList(sellersData);
         setStoresList(storesData);
       } catch (error) {
-        console.error('Erro ao verificar autenticação ou carregar lojas:', error);
+        console.error('Erro ao verificar autenticação ou carregar dados:', error);
         router.push('/');
       }
     }
@@ -51,131 +54,151 @@ export default function AdminStoresPage() {
     init();
   }, [router]);
   
-  // Set form data when editing a store
+  // Set form data when editing a seller
   useEffect(() => {
-    if (currentStore) {
-      setName(currentStore.name);
-      setCity(currentStore.city);
-      setPhone(currentStore.phone);
-      setHours(currentStore.hours || '');
-      setIconUrl(currentStore.iconUrl || '');
-      setIsActive(currentStore.isActive !== false);
+    if (currentSeller) {
+      setName(currentSeller.name);
+      setStoreId(currentSeller.storeId);
+      setWhatsapp(currentSeller.whatsapp);
+      setIsActive(currentSeller.isActive !== false);
     }
-  }, [currentStore]);
+  }, [currentSeller]);
   
   const handleAddNew = () => {
     setIsEditing(true);
-    setCurrentStore(null);
+    setCurrentSeller(null);
     resetForm();
+    
+    // Se houver lojas, selecionar a primeira por padrão
+    if (storesList.length > 0) {
+      setStoreId(storesList[0].id);
+    }
   };
   
-  const handleEdit = (store: Store) => {
+  const handleEdit = (seller: Seller) => {
     setIsEditing(true);
-    setCurrentStore(store);
+    setCurrentSeller(seller);
   };
   
   const handleDelete = async (id: string) => {
-    if (window.confirm('Tem certeza que deseja excluir esta loja?')) {
+    if (window.confirm('Tem certeza que deseja excluir este vendedor?')) {
       try {
-        const { storeService } = await import('@/services/supabaseService');
-        const success = await storeService.delete(id);
+        const { sellerService } = await import('@/services/supabaseService');
+        const success = await sellerService.delete(id);
         
         if (success) {
-          // Encontrar o nome da loja para exibir no toast
-          const deletedStore = storesList.find(s => s.id === id);
+          // Encontrar o nome do vendedor para exibir no toast
+          const deletedSeller = sellersList.find(s => s.id === id);
           
           // Atualizar a lista local
-          setStoresList(storesList.filter(s => s.id !== id));
+          setSellersList(sellersList.filter(s => s.id !== id));
           
           // Mostrar toast de sucesso
-          if (deletedStore) {
-            showToast(`Loja "${deletedStore.name}" excluída com sucesso!`, 'success');
+          if (deletedSeller) {
+            showToast(`Vendedor "${deletedSeller.name}" excluído com sucesso!`, 'success');
           } else {
-            showToast('Loja excluída com sucesso!', 'success');
+            showToast('Vendedor excluído com sucesso!', 'success');
           }
         } else {
           // Mostrar toast de erro
-          showToast('Erro ao excluir a loja. Tente novamente.', 'error');
+          showToast('Erro ao excluir o vendedor. Tente novamente.', 'error');
         }
       } catch (error) {
-        console.error('Erro ao excluir loja:', error);
+        console.error('Erro ao excluir vendedor:', error);
         // Mostrar toast de erro
-        showToast('Ocorreu um erro ao excluir a loja. Tente novamente.', 'error');
+        showToast('Ocorreu um erro ao excluir o vendedor. Tente novamente.', 'error');
       }
     }
   };
   
   const resetForm = () => {
     setName('');
-    setCity('');
-    setPhone('');
-    setHours('');
-    setIconUrl('');
+    setStoreId('');
+    setWhatsapp('');
     setIsActive(true);
   };
   
   const handleCancel = () => {
     setIsEditing(false);
-    setCurrentStore(null);
+    setCurrentSeller(null);
     resetForm();
+  };
+  
+  const formatWhatsApp = (input: string) => {
+    // Remover tudo que não for dígito
+    const numbers = input.replace(/\D/g, '');
+    
+    // Garantir que tenha o código do país (Brasil - 55)
+    if (!numbers.startsWith('55') && numbers.length > 0) {
+      return `55${numbers}`;
+    }
+    
+    return numbers;
   };
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     try {
-      const { storeService } = await import('@/services/supabaseService');
+      const { sellerService } = await import('@/services/supabaseService');
       
-      const storeData = {
+      // Formatar o número do WhatsApp
+      const formattedWhatsapp = formatWhatsApp(whatsapp);
+      
+      const sellerData = {
         name,
-        city,
-        phone,
-        hours,
-        iconUrl,
+        storeId,
+        whatsapp: formattedWhatsapp,
         isActive
       };
       
-      if (currentStore) {
-        // Atualizar loja existente no Supabase
-        const success = await storeService.update(currentStore.id, storeData);
+      if (currentSeller) {
+        // Atualizar vendedor existente no Supabase
+        const success = await sellerService.update(currentSeller.id, sellerData);
         
         if (success) {
           // Atualizar a lista local
-          setStoresList(prevStores => 
-            prevStores.map(s => s.id === currentStore.id ? { ...s, ...storeData, id: currentStore.id } : s)
+          setSellersList(prevSellers => 
+            prevSellers.map(s => s.id === currentSeller.id ? { ...s, ...sellerData } : s)
           );
           
           // Mostrar toast de sucesso
-          showToast(`Loja "${name}" atualizada com sucesso!`, 'success');
+          showToast(`Vendedor "${name}" atualizado com sucesso!`, 'success');
         } else {
           // Mostrar toast de erro
-          showToast('Erro ao atualizar a loja. Tente novamente.', 'error');
+          showToast('Erro ao atualizar o vendedor. Tente novamente.', 'error');
         }
       } else {
-        // Adicionar nova loja no Supabase
-        const newStore = await storeService.add(storeData);
+        // Adicionar novo vendedor no Supabase
+        const newSeller = await sellerService.add(sellerData);
         
-        if (newStore) {
+        if (newSeller) {
           // Adicionar à lista local
-          setStoresList(prevStores => [...prevStores, newStore]);
+          setSellersList(prevSellers => [...prevSellers, newSeller]);
           
           // Mostrar toast de sucesso
-          showToast(`Loja "${name}" adicionada com sucesso!`, 'success');
+          showToast(`Vendedor "${name}" adicionado com sucesso!`, 'success');
         } else {
           // Mostrar toast de erro
-          showToast('Erro ao adicionar a loja. Tente novamente.', 'error');
+          showToast('Erro ao adicionar o vendedor. Tente novamente.', 'error');
         }
       }
       
       // Reset form
       setIsEditing(false);
-      setCurrentStore(null);
+      setCurrentSeller(null);
       resetForm();
     } catch (error) {
-      console.error('Erro ao salvar loja:', error);
+      console.error('Erro ao salvar vendedor:', error);
       // Mostrar toast de erro
-      showToast('Ocorreu um erro ao salvar a loja. Tente novamente.', 'error');
+      showToast('Ocorreu um erro ao salvar o vendedor. Tente novamente.', 'error');
     }
+  };
+  
+  // Função para buscar o nome da loja pelo ID
+  const getStoreName = (id: string) => {
+    const store = storesList.find(s => s.id === id);
+    return store ? store.name : 'Loja não encontrada';
   };
   
   if (!isAuthenticated) {
@@ -193,30 +216,52 @@ export default function AdminStoresPage() {
           <Link href="/admin" className="text-blue-700 hover:underline mb-2 inline-block">
             &larr; Voltar para o Dashboard
           </Link>
-          <h1 className="text-3xl font-bold text-gray-800">Gerenciar Lojas</h1>
+          <h1 className="text-3xl font-bold text-gray-800">Gerenciar Vendedores</h1>
         </div>
         
         {!isEditing && (
           <button
             onClick={handleAddNew}
             className="bg-blue-700 hover:bg-blue-800 text-white px-4 py-2 rounded-md transition duration-300"
+            disabled={storesList.length === 0}
+            title={storesList.length === 0 ? "É necessário cadastrar pelo menos uma loja primeiro" : ""}
           >
-            Adicionar Nova Loja
+            Adicionar Novo Vendedor
           </button>
         )}
       </div>
       
+      {storesList.length === 0 && !isEditing && (
+        <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6">
+          <div className="flex">
+            <div className="ml-3">
+              <p className="text-sm text-yellow-700">
+                Para cadastrar vendedores, você precisa primeiro cadastrar pelo menos uma loja.
+              </p>
+              <div className="mt-2">
+                <Link 
+                  href="/admin/stores" 
+                  className="text-yellow-700 underline hover:text-yellow-600"
+                >
+                  Ir para o gerenciamento de lojas
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      
       {isEditing ? (
         <div className="bg-white p-6 rounded-lg shadow-md">
           <h2 className="text-xl font-semibold text-gray-800 mb-4">
-            {currentStore ? 'Editar Loja' : 'Nova Loja'}
+            {currentSeller ? 'Editar Vendedor' : 'Novo Vendedor'}
           </h2>
           
           <form onSubmit={handleSubmit}>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
               <div>
                 <label className="block text-gray-700 mb-2" htmlFor="name">
-                  Nome da Loja *
+                  Nome do Vendedor *
                 </label>
                 <input
                   type="text"
@@ -229,60 +274,41 @@ export default function AdminStoresPage() {
               </div>
               
               <div>
-                <label className="block text-gray-700 mb-2" htmlFor="city">
-                  Cidade *
+                <label className="block text-gray-700 mb-2" htmlFor="storeId">
+                  Loja *
                 </label>
-                <input
-                  type="text"
-                  id="city"
-                  value={city}
-                  onChange={(e) => setCity(e.target.value)}
+                <select
+                  id="storeId"
+                  value={storeId}
+                  onChange={(e) => setStoreId(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   required
-                />
+                >
+                  <option value="">Selecione uma loja</option>
+                  {storesList.map(store => (
+                    <option key={store.id} value={store.id}>
+                      {store.name} ({store.city})
+                    </option>
+                  ))}
+                </select>
               </div>
               
               <div>
-                <label className="block text-gray-700 mb-2" htmlFor="phone">
-                  Telefone *
+                <label className="block text-gray-700 mb-2" htmlFor="whatsapp">
+                  WhatsApp *
                 </label>
                 <input
                   type="text"
-                  id="phone"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
+                  id="whatsapp"
+                  value={whatsapp}
+                  onChange={(e) => setWhatsapp(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="(00) 0000-0000"
+                  placeholder="Ex: 5565999998888"
                   required
                 />
-              </div>
-              
-              <div>
-                <label className="block text-gray-700 mb-2" htmlFor="hours">
-                  Horário de Funcionamento
-                </label>
-                <input
-                  type="text"
-                  id="hours"
-                  value={hours}
-                  onChange={(e) => setHours(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Segunda a Sábado: 8h às 18h"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-gray-700 mb-2" htmlFor="iconUrl">
-                  URL do Ícone
-                </label>
-                <input
-                  type="url"
-                  id="iconUrl"
-                  value={iconUrl}
-                  onChange={(e) => setIconUrl(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="https://exemplo.com/imagem.jpg"
-                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Formato: 55 (Brasil) + DDD + número. Ex: 5565999998888
+                </p>
               </div>
               
               <div>
@@ -298,7 +324,7 @@ export default function AdminStoresPage() {
                     className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                   />
                   <label htmlFor="isActive" className="text-gray-700">
-                    Loja Ativa
+                    Ativo
                   </label>
                 </div>
               </div>
@@ -317,7 +343,7 @@ export default function AdminStoresPage() {
                 type="submit"
                 className="px-4 py-2 bg-blue-700 hover:bg-blue-800 text-white rounded-md transition duration-300"
               >
-                {currentStore ? 'Atualizar' : 'Salvar'}
+                {currentSeller ? 'Atualizar' : 'Salvar'}
               </button>
             </div>
           </form>
@@ -331,10 +357,10 @@ export default function AdminStoresPage() {
                   Nome
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Cidade
+                  Loja
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Telefone
+                  WhatsApp
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Status
@@ -345,37 +371,37 @@ export default function AdminStoresPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {storesList.map((store) => (
-                <tr key={store.id}>
+              {sellersList.map((seller) => (
+                <tr key={seller.id}>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">{store.name}</div>
+                    <div className="text-sm font-medium text-gray-900">{seller.name}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">{store.city}</div>
+                    <div className="text-sm text-gray-900">{getStoreName(seller.storeId)}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">{store.phone}</div>
+                    <div className="text-sm text-gray-900">{seller.whatsapp}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span
                       className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                        store.isActive !== false
+                        seller.isActive !== false
                           ? 'bg-green-100 text-green-800'
                           : 'bg-red-100 text-red-800'
                       }`}
                     >
-                      {store.isActive !== false ? 'Ativa' : 'Inativa'}
+                      {seller.isActive !== false ? 'Ativo' : 'Inativo'}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <button
-                      onClick={() => handleEdit(store)}
+                      onClick={() => handleEdit(seller)}
                       className="text-blue-600 hover:text-blue-900 mr-4"
                     >
                       Editar
                     </button>
                     <button
-                      onClick={() => handleDelete(store.id)}
+                      onClick={() => handleDelete(seller.id)}
                       className="text-red-600 hover:text-red-900"
                     >
                       Excluir
@@ -386,13 +412,13 @@ export default function AdminStoresPage() {
             </tbody>
           </table>
           
-          {storesList.length === 0 && (
+          {sellersList.length === 0 && (
             <div className="text-center py-8">
-              <p className="text-gray-500">Nenhuma loja cadastrada.</p>
+              <p className="text-gray-500">Nenhum vendedor cadastrado.</p>
             </div>
           )}
         </div>
       )}
     </div>
   );
-}
+} 

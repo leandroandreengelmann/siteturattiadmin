@@ -3,10 +3,11 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useToast } from '@/components/ToastProvider';
 import NotificationBadge from '@/components/NotificationBadge';
 import StatusBadge from '@/components/StatusBadge';
-import { BuildingIcon, UsersIcon, LifeBuoyIcon } from '@/components/Icons';
+import { BuildingIcon, UsersIcon, LifeBuoyIcon, SettingsIcon } from '@/components/Icons';
 
 export default function AdminPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -210,8 +211,33 @@ export default function AdminPage() {
           href="/admin/stores"
           className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition duration-300"
         >
-          <NotificationBadge count={1} color="red">
-            <div className="flex items-center justify-center h-16 w-16 bg-green-100 text-green-700 rounded-full mb-4">
+          <div className="flex items-center justify-center h-16 w-16 bg-green-100 text-green-700 rounded-full mb-4">
+            <svg 
+              className="w-8 h-8" 
+              fill="none" 
+              stroke="currentColor" 
+              viewBox="0 0 24 24" 
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path 
+                strokeLinecap="round" 
+                strokeLinejoin="round" 
+                strokeWidth={2} 
+                d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+              />
+            </svg>
+          </div>
+          <h2 className="text-xl font-semibold text-gray-800 mb-2 font-inter">Lojas</h2>
+          <p className="text-gray-600 font-inter">Gerenciar informações das lojas físicas.</p>
+        </Link>
+        
+        {/* Sellers Management */}
+        <Link 
+          href="/admin/sellers"
+          className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition duration-300"
+        >
+          <NotificationBadge count={1} color="green">
+            <div className="flex items-center justify-center h-16 w-16 bg-teal-100 text-teal-700 rounded-full mb-4">
               <svg 
                 className="w-8 h-8" 
                 fill="none" 
@@ -223,15 +249,15 @@ export default function AdminPage() {
                   strokeLinecap="round" 
                   strokeLinejoin="round" 
                   strokeWidth={2} 
-                  d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+                  d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
                 />
               </svg>
             </div>
           </NotificationBadge>
-          <h2 className="text-xl font-semibold text-gray-800 mb-2 font-inter">Lojas</h2>
-          <p className="text-gray-600 font-inter">Gerenciar informações das lojas físicas.</p>
+          <h2 className="text-xl font-semibold text-gray-800 mb-2 font-inter">Vendedores</h2>
+          <p className="text-gray-600 font-inter">Gerenciar vendedores das lojas físicas.</p>
           <div className="mt-2">
-            <StatusBadge status="pendente" size="sm" />
+            <StatusBadge status="novo" size="sm" />
           </div>
         </Link>
 
@@ -400,30 +426,16 @@ export default function AdminPage() {
 
         {/* Última linha de cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Card de Configurações */}
+          {/* Card de Vendedores */}
           <Link
-            href="/admin/stores"
+            href="/admin/sellers"
             className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow"
           >
             <div className="flex flex-col items-center">
-              <BuildingIcon className="w-12 h-12 text-blue-600 mb-3" />
-              <h2 className="text-xl font-semibold text-gray-800 mb-1">Lojas</h2>
+              <UsersIcon className="w-12 h-12 text-teal-600 mb-3" />
+              <h2 className="text-xl font-semibold text-gray-800 mb-1">Vendedores</h2>
               <p className="text-gray-600 text-center">
-                Gerencie as lojas físicas da rede.
-              </p>
-            </div>
-          </Link>
-
-          {/* Card de Usuários */}
-          <Link
-            href="/admin/users"
-            className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow"
-          >
-            <div className="flex flex-col items-center">
-              <UsersIcon className="w-12 h-12 text-blue-600 mb-3" />
-              <h2 className="text-xl font-semibold text-gray-800 mb-1">Usuários</h2>
-              <p className="text-gray-600 text-center">
-                Gerencie os usuários administrativos do sistema.
+                Gerencie os vendedores das lojas físicas.
               </p>
             </div>
           </Link>
@@ -438,6 +450,20 @@ export default function AdminPage() {
               <h2 className="text-xl font-semibold text-gray-800 mb-1">Diagnóstico</h2>
               <p className="text-gray-600 text-center">
                 Verifique e configure o estado do sistema.
+              </p>
+            </div>
+          </Link>
+          
+          {/* Card de Status */}
+          <Link
+            href="/admin/status"
+            className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow"
+          >
+            <div className="flex flex-col items-center">
+              <SettingsIcon className="w-12 h-12 text-blue-600 mb-3" />
+              <h2 className="text-xl font-semibold text-gray-800 mb-1">Status</h2>
+              <p className="text-gray-600 text-center">
+                Visualize o estado atual do sistema.
               </p>
             </div>
           </Link>
