@@ -4,6 +4,11 @@ import { useState, useEffect } from 'react';
 import { Product } from '@/data/types';
 import ProductCard from '@/components/ProductCard';
 
+// Configurações para evitar cache na Vercel
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+export const fetchCache = 'force-no-store';
+
 export default function ProductsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [showPromotionsOnly, setShowPromotionsOnly] = useState(false);
@@ -15,7 +20,10 @@ export default function ProductsPage() {
     async function loadProducts() {
       try {
         const { productService } = await import('@/services/supabaseService');
+        
+        // Evitar cache via useEffect com carga na montagem
         const productsData = await productService.getAll();
+        
         setProducts(productsData);
       } catch (error) {
         console.error('Erro ao carregar produtos:', error);

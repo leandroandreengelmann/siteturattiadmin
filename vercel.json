@@ -5,6 +5,31 @@
   "outputDirectory": ".next",
   "env": {
     "NEXT_PUBLIC_SUPABASE_URL": "https://jxdycbctvnhaojsfbadd.supabase.co",
-    "NEXT_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4ZHljYmN0dm5oYW9qc2ZiYWRkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM5OTQ4OTYsImV4cCI6MjA1OTU3MDg5Nn0.5wzf0Op1tNTMSB1L9l_ysqA8sc4oiFKYPS-XPiIPejQ"
-  }
-} 
+    "NEXT_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4ZHljYmN0dm5oYW9qc2ZiYWRkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM5OTQ4OTYsImV4cCI6MjA1OTU3MDg5Nn0.5wzf0Op1tNTMSB1L9l_ysqA8sc4oiFKYPS-XPiIPejQ",
+    "NEXT_PUBLIC_DISABLE_CACHE": "true"
+  },
+  "version": 2,
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0"
+        },
+        {
+          "key": "Pragma",
+          "value": "no-cache"
+        },
+        {
+          "key": "Expires",
+          "value": "0"
+        },
+        {
+          "key": "Surrogate-Control",
+          "value": "no-store"
+        }
+      ]
+    }
+  ]
+}

@@ -134,7 +134,18 @@ export default function AdminProductsPage() {
     setUploadingImages(true);
     
     try {
-      const { productService } = await import('@/services/supabaseService');
+      // Verificar se o usuário está autenticado
+      const { authService, productService } = await import('@/services/supabaseService');
+      const session = await authService.getSession();
+      
+      if (!session) {
+        showToast('Sessão expirada. Por favor, faça login novamente.', 'error');
+        setUploadingImages(false);
+        // Direcionar para tela de login
+        router.push('/admin');
+        return productImages;
+      }
+      
       let successCount = 0;
       let failCount = 0;
       
@@ -158,6 +169,17 @@ export default function AdminProductsPage() {
           
           // Mostrar toast para cada erro de arquivo individual
           if (error instanceof Error) {
+            // Se for erro de autenticação, tentar obter nova sessão
+            if (error.message.includes('autenticado') || error.message.includes('authorization')) {
+              const newSession = await authService.refreshSession();
+              if (newSession) {
+                showToast('Sessão renovada. Tente novamente.', 'info');
+              } else {
+                showToast('Sua sessão expirou. Por favor, faça login novamente.', 'error');
+                router.push('/admin');
+              }
+              break;
+            }
             showToast(`Erro: ${error.message}`, 'error');
           }
         }
@@ -188,6 +210,11 @@ export default function AdminProductsPage() {
       
       if (error instanceof Error) {
         errorMessage = error.message;
+        // Se for erro de autenticação, redirecionar para login
+        if (errorMessage.includes('autenticado') || errorMessage.includes('authorization')) {
+          showToast('Sua sessão expirou. Por favor, faça login novamente.', 'error');
+          router.push('/admin');
+        }
       }
       
       showToast(errorMessage, 'error');

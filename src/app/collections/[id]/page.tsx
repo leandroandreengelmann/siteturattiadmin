@@ -4,6 +4,11 @@ import Link from 'next/link';
 import { collectionService, colorService } from '@/services/supabaseService';
 import { notFound } from 'next/navigation';
 
+// Configurações para evitar cache na Vercel
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+export const fetchCache = 'force-no-store';
+
 async function getCollectionData(id: string) {
   const collection = await collectionService.getById(id);
   if (!collection) {

@@ -2,6 +2,11 @@ import ColorCollectionCard from '@/components/ColorCollectionCard';
 import { collectionService } from '@/services/supabaseService';
 import { ColorCollection } from '@/data/types';
 
+// Configurações para evitar cache na Vercel
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+export const fetchCache = 'force-no-store';
+
 async function getCollections() {
   const collections = await collectionService.getAll();
   return collections;

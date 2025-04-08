@@ -25,7 +25,31 @@ const nextConfig = {
     tsconfigPath: 'tsconfig.json'
   },
   // Configurações experimentais
-  experimental: { }
+  experimental: { },
+  // Configurações para evitar cache
+  headers: async () => {
+    return [
+      {
+        source: '/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'no-store, max-age=0, must-revalidate'
+          },
+          {
+            key: 'Pragma',
+            value: 'no-cache'
+          },
+          {
+            key: 'Expires',
+            value: '0'
+          }
+        ]
+      }
+    ];
+  },
+  // Forçar todas as páginas a serem renderizadas como SSR para evitar cache
+  reactStrictMode: true
 };
 
-export default nextConfig; 
+export default nextConfig;

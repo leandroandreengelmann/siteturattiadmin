@@ -313,10 +313,22 @@ export const productService = {
   async uploadImage(file: File): Promise<string | null> {
     try {
       // Primeiro, obter a sessão atual para o token de autenticação
-      const { data: sessionData } = await supabase.auth.getSession();
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError) {
+        console.error('Erro ao verificar sessão:', sessionError);
+        throw new Error('Erro ao verificar sua sessão. Por favor, faça login novamente.');
+      }
+      
       if (!sessionData.session) {
-        console.error('Erro: Usuário não autenticado para fazer upload de arquivo');
-        throw new Error('Você precisa estar autenticado para fazer upload de imagens');
+        // Tentar renovar a sessão automaticamente
+        console.log('Sessão não encontrada. Tentando renovar...');
+        const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+        
+        if (refreshError || !refreshData.session) {
+          console.error('Erro ao renovar sessão:', refreshError);
+          throw new Error('Você precisa estar autenticado para fazer upload de imagens. Por favor, faça login novamente.');
+        }
       }
       
       // Limpar o nome do arquivo e remover caracteres especiais
@@ -330,17 +342,30 @@ export const productService = {
       
       console.log('Iniciando upload com nome limpo:', fileName);
       
+      // Obter o token de autenticação atual
+      const accessToken = sessionData.session?.access_token || '';
+      
+      // Adicionar cabeçalhos de autenticação explícitos
+      const options = {
+        cacheControl: '3600',
+        upsert: true,
+        contentType: file.type,
+        duplex: 'half',
+        headers: {
+          Authorization: `Bearer ${accessToken}`
+        }
+      };
+      
       // Fazer upload para a pasta 'public' do bucket
       const { data, error } = await supabase.storage
         .from('images')
-        .upload(fileName, file, {
-          cacheControl: '3600',
-          upsert: true,
-          contentType: file.type, // Definir explicitamente o tipo de conteúdo
-        });
+        .upload(fileName, file, options);
       
       if (error) {
         console.error('Erro ao fazer upload da imagem:', error);
+        if (error.message.includes('authorization')) {
+          throw new Error('Erro de autorização. Sua sessão pode ter expirado. Por favor, faça login novamente.');
+        }
         throw new Error(`Erro de upload: ${error.message}`);
       }
       
@@ -358,7 +383,10 @@ export const productService = {
       return urlData.publicUrl;
     } catch (error) {
       console.error('Erro ao fazer upload da imagem:', error);
-      return null;
+      if (error instanceof Error) {
+        throw error; // Propagar o erro para tratamento adequado
+      }
+      throw new Error('Erro desconhecido ao fazer upload da imagem');
     }
   },
 
@@ -962,6 +990,67 @@ export const authService = {
         error, 
         message: 'Ocorreu um erro ao processar o login. Tente novamente.'
       };
+    }
+  },
+  
+  // Atualizar token da sessão - usado quando o token expira
+  async refreshSession() {
+    try {
+      console.log('Tentando renovar a sessão...');
+      
+      const { data, error } = await supabase.auth.refreshSession();
+      
+      if (error) {
+        console.error('Erro ao renovar sessão:', error);
+        
+        // Se falhar o refresh, tentar usar o token armazenado no localStorage
+        if (typeof window !== 'undefined') {
+          const token = localStorage.getItem('turatti-store-auth-token');
+          const expires = localStorage.getItem('turatti-store-auth-expires');
+          
+          if (token && expires) {
+            try {
+              console.log('Tentando restaurar sessão do localStorage...');
+              const { data: sessionData, error: sessionError } = await supabase.auth.setSession({
+                access_token: token,
+                refresh_token: ''
+              });
+              
+              if (!sessionError && sessionData.session) {
+                console.log('Sessão restaurada com sucesso do localStorage');
+                return sessionData.session;
+              }
+            } catch (setSessionError) {
+              console.error('Erro ao restaurar sessão:', setSessionError);
+            }
+          }
+        }
+        
+        return null;
+      }
+      
+      if (!data.session) {
+        console.error('Sessão não encontrada após refresh');
+        return null;
+      }
+      
+      console.log('Sessão renovada com sucesso. Nova expiração:', 
+        new Date(data.session.expires_at! * 1000).toLocaleString());
+      
+      // Atualizar tokens no localStorage
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem('turatti-store-auth-token', data.session.access_token);
+          localStorage.setItem('turatti-store-auth-expires', String(data.session.expires_at));
+        } catch (storageError) {
+          console.warn('Não foi possível atualizar o token no localStorage:', storageError);
+        }
+      }
+      
+      return data.session;
+    } catch (error) {
+      console.error('Erro inesperado ao renovar sessão:', error);
+      return null;
     }
   },
   
