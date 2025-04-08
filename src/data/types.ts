@@ -44,6 +44,7 @@ export interface ColorCollection {
   id: string;
   name: string;
   representativeColor?: string;
+  imageUrl?: string;
   description: string;
   createdAt?: string;
   updatedAt?: string;
