@@ -2,6 +2,7 @@
 
 import Image from 'next/image';
 import { Store } from '@/data/types';
+import { BuildingIcon, ShoppingBagIcon } from '@/components/Icons';
 
 interface StoreCardProps {
   store: Store;
@@ -28,6 +29,14 @@ export default function StoreCard({ store, onClick }: StoreCardProps) {
     return colors[letterIndex];
   };
 
+  // Determinar qual ícone usar com base no nome da loja
+  const getStoreIcon = (name: string) => {
+    // Se contém "peixoto" no nome, usa ShoppingBagIcon, caso contrário usa BuildingIcon
+    return name.toLowerCase().includes('peixoto') ? 
+      <ShoppingBagIcon className="w-8 h-8 text-white" /> : 
+      <BuildingIcon className="w-8 h-8 text-white" />;
+  };
+
   return (
     <div 
       className="bg-white rounded-lg shadow-md p-4 cursor-pointer hover:shadow-xl transition-shadow duration-300 flex flex-col items-center"
@@ -43,8 +52,8 @@ export default function StoreCard({ store, onClick }: StoreCardProps) {
             className="object-cover"
           />
         ) : (
-          <div className={`w-full h-full flex items-center justify-center text-white ${getIconBackgroundColor(store.name)}`}>
-            <span className="text-xl font-bold">{store.name.charAt(0).toUpperCase()}</span>
+          <div className={`w-full h-full flex items-center justify-center ${getIconBackgroundColor(store.name)}`}>
+            {getStoreIcon(store.name)}
           </div>
         )}
       </div>

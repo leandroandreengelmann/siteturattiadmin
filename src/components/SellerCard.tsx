@@ -2,6 +2,7 @@
 
 import { Seller } from '@/data/types';
 import { FaWhatsapp } from 'react-icons/fa';
+import { UserIcon } from '@/components/Icons';
 
 interface SellerCardProps {
   seller: Seller;
@@ -28,7 +29,10 @@ export default function SellerCard({ seller, prefilledText }: SellerCardProps) {
 
   return (
     <div className="bg-white rounded-lg shadow-md p-4 mb-3 flex justify-between items-center">
-      <div>
+      <div className="flex items-center">
+        <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center mr-3">
+          <UserIcon className="h-6 w-6 text-blue-600" />
+        </div>
         <h3 className="font-medium text-gray-800">{seller.name}</h3>
       </div>
       <button

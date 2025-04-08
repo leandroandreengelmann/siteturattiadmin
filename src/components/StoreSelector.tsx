@@ -5,7 +5,8 @@ import { Store, Seller } from '@/data/types';
 import { storeService, sellerService } from '@/services/supabaseService';
 import StoreCard from './StoreCard';
 import SellerCard from './SellerCard';
-import { FaStore, FaArrowLeft } from 'react-icons/fa';
+import { BuildingIcon, UsersIcon } from '@/components/Icons';
+import { FaArrowLeft } from 'react-icons/fa';
 
 interface StoreSelectorProps {
   onClose?: () => void;
@@ -101,9 +102,16 @@ export default function StoreSelector({ onClose, prefilledText }: StoreSelectorP
         <div className="bg-white rounded-lg shadow-xl p-6 max-w-md w-full" onClick={(e) => e.stopPropagation()}>
           {/* Cabeçalho */}
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-xl font-semibold">
-              {selectedStore ? `Vendedores - ${selectedStore.name}` : 'Selecione uma Loja'}
-            </h2>
+            <div className="flex items-center">
+              {selectedStore ? (
+                <UsersIcon className="h-6 w-6 text-blue-600 mr-2" />
+              ) : (
+                <BuildingIcon className="h-6 w-6 text-blue-600 mr-2" />
+              )}
+              <h2 className="text-xl font-semibold">
+                {selectedStore ? `Vendedores - ${selectedStore.name}` : 'Selecione uma Loja'}
+              </h2>
+            </div>
             {selectedStore ? (
               <button
                 onClick={handleBackToStores}

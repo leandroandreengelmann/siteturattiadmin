@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from 'react';
-import { FaWhatsapp } from 'react-icons/fa';
+import { FaWhatsapp, FaStore } from 'react-icons/fa';
 import StoreSelector from './StoreSelector';
 
 interface ContactSellerButtonProps {
@@ -29,13 +29,16 @@ export default function ContactSellerButton({
     <>
       <button
         onClick={openSelector}
-        className={`flex items-center justify-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors duration-300 ${className}`}
+        className={`flex items-center justify-center px-4 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg transition duration-300 shadow-md ${className}`}
       >
-        <FaWhatsapp className="mr-2" />
-        <span>{buttonText}</span>
+        <div className="flex items-center space-x-2">
+          <FaStore className="mr-2 text-lg" />
+          <span className="font-medium">{buttonText}</span>
+          <FaWhatsapp className="ml-1 text-xl" />
+        </div>
       </button>
       
-      {showSelector && <StoreSelector onClose={closeSelector} />}
+      {showSelector && <StoreSelector onClose={closeSelector} prefilledText={prefilledText} />}
     </>
   );
 } 

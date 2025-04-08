@@ -29,7 +29,7 @@ export default function ContactSellerButtonClient() {
   return (
     <ContactSellerButton 
       buttonText="Falar com vendedor" 
-      className="flex-1 shadow-sm"
+      className="flex-1 shadow-md text-sm md:text-base font-medium"
       prefilledText={prefilledText}
     />
   );
