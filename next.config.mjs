@@ -22,10 +22,8 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
-  // Desativar regras específicas do Next.js
-  experimental: {
-    missingSuspenseWithCSRBailout: false,
-  },
+  // Configurações experimentais
+  experimental: { }
 };
 
 export default nextConfig; 

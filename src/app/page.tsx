@@ -8,22 +8,16 @@ async function getData() {
   try {
     // Buscar dados em paralelo para melhor performance e tolerância a falhas
     const [
-      promotionProductsPromise, 
       featuredProductsPromise, 
       colorCollectionsPromise,
       bannersPromise
     ] = await Promise.allSettled([
-      productService.getPromotions(),
       productService.getNonPromotions(),
       collectionService.getAll(),
       bannerService.getActive()
     ]);
     
     // Extrair resultados com fallbacks para evitar quebras
-    const promotionProducts = promotionProductsPromise.status === 'fulfilled' 
-      ? promotionProductsPromise.value 
-      : [];
-      
     const featuredProducts = featuredProductsPromise.status === 'fulfilled' 
       ? featuredProductsPromise.value 
       : [];
@@ -38,7 +32,6 @@ async function getData() {
     
     return {
       featuredProducts,
-      promotionProducts,
       colorCollections,
       banners
     };
@@ -47,7 +40,6 @@ async function getData() {
     // Retornar valores padrão para evitar quebrar a página
     return {
       featuredProducts: [],
-      promotionProducts: [],
       colorCollections: [],
       banners: []
     };
@@ -56,7 +48,7 @@ async function getData() {
 
 export default async function Home() {
   // Buscar dados do Supabase
-  const { featuredProducts, promotionProducts, colorCollections, banners } = await getData();
+  const { featuredProducts, colorCollections, banners } = await getData();
   
   // Obter o primeiro banner ativo, se houver algum
   const firstBanner = banners.length > 0 ? banners[0] : undefined;
@@ -67,14 +59,6 @@ export default async function Home() {
       <Banner banner={firstBanner} />
       
       {/* Promotion Products Carousel - mostrar primeiro */}
-      {promotionProducts.length > 0 && (
-        <ProductCarousel 
-          products={promotionProducts} 
-          title="Promoções do Mês" 
-        />
-      )}
-      
-      {/* Featured Products Carousel */}
       {featuredProducts.length > 0 && (
         <ProductCarousel 
           products={featuredProducts} 
