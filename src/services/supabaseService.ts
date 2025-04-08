@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase';
-import { Product, ColorCollection, Color, Store, ProductImage, Banner } from '@/data/types';
+import { Product, ColorCollection, Color, Store, ProductImage, Banner, Seller } from '@/data/types';
 
 // Serviços para Produtos
 export const productService = {
@@ -644,11 +644,40 @@ export const colorService = {
 
 // Serviços para Lojas
 export const storeService = {
+  // Flag para verificar se já tentamos criar a tabela
+  _tableCheckAttempted: false,
+
+  // Verificar e inicializar a tabela de lojas, se necessário
+  async checkAndInitializeStoresTable(): Promise<boolean> {
+    if (this._tableCheckAttempted) {
+      return true;
+    }
+
+    this._tableCheckAttempted = true;
+    
+    try {
+      const { data, error } = await supabase.from('stores').select('count(*)', { count: 'exact', head: true });
+      
+      if (!error) {
+        return true;
+      }
+      
+      console.log('A tabela de lojas pode não existir. Usando dados estáticos.');
+      return false;
+    } catch (e) {
+      console.log('Erro ao verificar tabela de lojas.');
+      return false;
+    }
+  },
+
   // Buscar todas as lojas
   async getAll(): Promise<Store[]> {
+    await this.checkAndInitializeStoresTable();
+    
     const { data, error } = await supabase
       .from('stores')
-      .select('*');
+      .select('*')
+      .order('name');
     
     if (error) {
       console.error('Erro ao buscar lojas:', error);
@@ -662,6 +691,37 @@ export const storeService = {
       city: item.city,
       phone: item.phone,
       hours: item.hours,
+      iconUrl: item.icon_url,
+      isActive: item.is_active !== false, // Se não estiver explicitamente false, considera ativo
+      createdAt: item.created_at,
+      updatedAt: item.updated_at
+    })) as Store[];
+  },
+
+  // Buscar lojas ativas
+  async getActive(): Promise<Store[]> {
+    await this.checkAndInitializeStoresTable();
+    
+    const { data, error } = await supabase
+      .from('stores')
+      .select('*')
+      .eq('is_active', true)
+      .order('name');
+    
+    if (error) {
+      console.error('Erro ao buscar lojas ativas:', error);
+      return [];
+    }
+    
+    // Converter nomes de campos de snake_case para camelCase
+    return data.map(item => ({
+      id: item.id,
+      name: item.name,
+      city: item.city,
+      phone: item.phone,
+      hours: item.hours,
+      iconUrl: item.icon_url,
+      isActive: true,
       createdAt: item.created_at,
       updatedAt: item.updated_at
     })) as Store[];
@@ -669,6 +729,8 @@ export const storeService = {
 
   // Buscar uma loja pelo ID
   async getById(id: string): Promise<Store | null> {
+    await this.checkAndInitializeStoresTable();
+    
     const { data, error } = await supabase
       .from('stores')
       .select('*')
@@ -687,6 +749,8 @@ export const storeService = {
       city: data.city,
       phone: data.phone,
       hours: data.hours,
+      iconUrl: data.icon_url,
+      isActive: data.is_active !== false,
       createdAt: data.created_at,
       updatedAt: data.updated_at
     } as Store;
@@ -694,12 +758,16 @@ export const storeService = {
 
   // Adicionar uma nova loja
   async add(store: Omit<Store, 'id'>): Promise<Store | null> {
+    await this.checkAndInitializeStoresTable();
+    
     // Converter de camelCase para snake_case para o Supabase
     const supabaseStore = {
       name: store.name,
       city: store.city,
       phone: store.phone,
-      hours: store.hours
+      hours: store.hours,
+      icon_url: store.iconUrl,
+      is_active: store.isActive !== false
     };
     
     const { data, error } = await supabase
@@ -719,6 +787,8 @@ export const storeService = {
       city: data[0].city,
       phone: data[0].phone,
       hours: data[0].hours,
+      iconUrl: data[0].icon_url,
+      isActive: data[0].is_active,
       createdAt: data[0].created_at,
       updatedAt: data[0].updated_at
     } as Store;
@@ -726,6 +796,8 @@ export const storeService = {
 
   // Atualizar uma loja existente
   async update(id: string, updates: Partial<Store>): Promise<boolean> {
+    await this.checkAndInitializeStoresTable();
+    
     // Converter de camelCase para snake_case para o Supabase
     const supabaseUpdates: any = {};
     
@@ -733,6 +805,8 @@ export const storeService = {
     if (updates.city !== undefined) supabaseUpdates.city = updates.city;
     if (updates.phone !== undefined) supabaseUpdates.phone = updates.phone;
     if (updates.hours !== undefined) supabaseUpdates.hours = updates.hours;
+    if (updates.iconUrl !== undefined) supabaseUpdates.icon_url = updates.iconUrl;
+    if (updates.isActive !== undefined) supabaseUpdates.is_active = updates.isActive;
     
     const { error } = await supabase
       .from('stores')
@@ -749,6 +823,8 @@ export const storeService = {
 
   // Excluir uma loja
   async delete(id: string): Promise<boolean> {
+    await this.checkAndInitializeStoresTable();
+    
     const { error } = await supabase
       .from('stores')
       .delete()
@@ -760,6 +836,48 @@ export const storeService = {
     }
     
     return true;
+  },
+  
+  // Upload de ícone para a loja
+  async uploadStoreIcon(file: File): Promise<string | null> {
+    try {
+      // Limpar o nome do arquivo e remover caracteres especiais
+      const originalName = file.name.replace(/[^a-zA-Z0-9.]/g, '_');
+      const fileExt = originalName.split('.').pop()?.toLowerCase() || 'jpg';
+      
+      // Criar um nome único e seguro para o arquivo
+      const timestamp = Date.now();
+      const fileName = `public/store-icon-${timestamp}.${fileExt}`;
+      
+      // Fazer upload para a pasta 'public' do bucket
+      const { data, error } = await supabase.storage
+        .from('images')
+        .upload(fileName, file, {
+          cacheControl: '3600',
+          upsert: true,
+          contentType: file.type
+        });
+      
+      if (error) {
+        console.error('Erro ao fazer upload do ícone da loja:', error);
+        throw new Error(`Erro de upload: ${error.message}`);
+      }
+      
+      // Obter a URL pública
+      const { data: urlData } = supabase.storage
+        .from('images')
+        .getPublicUrl(fileName);
+      
+      if (!urlData || !urlData.publicUrl) {
+        console.error('Erro ao obter URL pública do ícone');
+        throw new Error('Erro ao obter URL pública');
+      }
+      
+      return urlData.publicUrl;
+    } catch (error) {
+      console.error('Erro ao fazer upload do ícone da loja:', error);
+      return null;
+    }
   }
 };
 
@@ -1204,5 +1322,211 @@ export const bannerService = {
       console.error('Erro ao fazer upload da imagem do banner:', error);
       return null;
     }
+  }
+};
+
+// Serviço para Vendedores
+export const sellerService = {
+  // Flag para verificar se já tentamos criar a tabela
+  _tableCheckAttempted: false,
+
+  // Verificar e inicializar a tabela de vendedores, se necessário
+  async checkAndInitializeSellersTable(): Promise<boolean> {
+    if (this._tableCheckAttempted) {
+      return true;
+    }
+
+    this._tableCheckAttempted = true;
+    
+    try {
+      const { data, error } = await supabase.from('sellers').select('count(*)', { count: 'exact', head: true });
+      
+      if (!error) {
+        return true;
+      }
+      
+      console.log('A tabela de vendedores pode não existir. Usando dados estáticos.');
+      return false;
+    } catch (e) {
+      console.log('Erro ao verificar tabela de vendedores.');
+      return false;
+    }
+  },
+
+  // Buscar todos os vendedores
+  async getAll(): Promise<Seller[]> {
+    await this.checkAndInitializeSellersTable();
+    
+    const { data, error } = await supabase
+      .from('sellers')
+      .select('*')
+      .order('name');
+    
+    if (error) {
+      console.error('Erro ao buscar vendedores:', error);
+      return [];
+    }
+    
+    // Converter de snake_case para camelCase
+    return data.map(item => ({
+      id: item.id,
+      name: item.name,
+      storeId: item.store_id,
+      whatsapp: item.whatsapp,
+      isActive: item.is_active !== false, // Se não estiver explicitamente false, considera ativo
+      createdAt: item.created_at,
+      updatedAt: item.updated_at
+    })) as Seller[];
+  },
+
+  // Buscar vendedores por loja
+  async getByStore(storeId: string): Promise<Seller[]> {
+    await this.checkAndInitializeSellersTable();
+    
+    const { data, error } = await supabase
+      .from('sellers')
+      .select('*')
+      .eq('store_id', storeId)
+      .eq('is_active', true) // Apenas vendedores ativos
+      .order('name');
+    
+    if (error) {
+      console.error(`Erro ao buscar vendedores da loja ${storeId}:`, error);
+      return [];
+    }
+    
+    // Converter de snake_case para camelCase
+    return data.map(item => ({
+      id: item.id,
+      name: item.name,
+      storeId: item.store_id,
+      whatsapp: item.whatsapp,
+      isActive: true,
+      createdAt: item.created_at,
+      updatedAt: item.updated_at
+    })) as Seller[];
+  },
+
+  // Buscar um vendedor pelo ID
+  async getById(id: string): Promise<Seller | null> {
+    await this.checkAndInitializeSellersTable();
+    
+    const { data, error } = await supabase
+      .from('sellers')
+      .select('*')
+      .eq('id', id)
+      .single();
+    
+    if (error) {
+      console.error(`Erro ao buscar vendedor ${id}:`, error);
+      return null;
+    }
+    
+    // Converter de snake_case para camelCase
+    return {
+      id: data.id,
+      name: data.name,
+      storeId: data.store_id,
+      whatsapp: data.whatsapp,
+      isActive: data.is_active !== false,
+      createdAt: data.created_at,
+      updatedAt: data.updated_at
+    } as Seller;
+  },
+
+  // Adicionar um novo vendedor
+  async add(seller: Omit<Seller, 'id'>): Promise<Seller | null> {
+    await this.checkAndInitializeSellersTable();
+
+    // Formatar o WhatsApp para garantir que esteja no formato correto
+    let whatsapp = seller.whatsapp.replace(/\D/g, '');
+    
+    // Adicionar o código do país (Brasil - 55) se não existir
+    if (!whatsapp.startsWith('55')) {
+      whatsapp = `55${whatsapp}`;
+    }
+    
+    // Converter de camelCase para snake_case
+    const supabaseSeller = {
+      name: seller.name,
+      store_id: seller.storeId,
+      whatsapp: whatsapp,
+      is_active: seller.isActive !== false
+    };
+    
+    const { data, error } = await supabase
+      .from('sellers')
+      .insert([supabaseSeller])
+      .select();
+    
+    if (error) {
+      console.error('Erro ao adicionar vendedor:', error);
+      return null;
+    }
+    
+    // Converter de volta para camelCase
+    return {
+      id: data[0].id,
+      name: data[0].name,
+      storeId: data[0].store_id,
+      whatsapp: data[0].whatsapp,
+      isActive: data[0].is_active,
+      createdAt: data[0].created_at,
+      updatedAt: data[0].updated_at
+    } as Seller;
+  },
+
+  // Atualizar um vendedor existente
+  async update(id: string, updates: Partial<Seller>): Promise<boolean> {
+    await this.checkAndInitializeSellersTable();
+    
+    // Converter de camelCase para snake_case
+    const supabaseUpdates: any = {};
+    
+    if (updates.name !== undefined) supabaseUpdates.name = updates.name;
+    if (updates.storeId !== undefined) supabaseUpdates.store_id = updates.storeId;
+    
+    if (updates.whatsapp !== undefined) {
+      // Formatar o WhatsApp
+      let whatsapp = updates.whatsapp.replace(/\D/g, '');
+      
+      // Adicionar o código do país se não existir
+      if (!whatsapp.startsWith('55')) {
+        whatsapp = `55${whatsapp}`;
+      }
+      
+      supabaseUpdates.whatsapp = whatsapp;
+    }
+    
+    if (updates.isActive !== undefined) supabaseUpdates.is_active = updates.isActive;
+    
+    const { error } = await supabase
+      .from('sellers')
+      .update(supabaseUpdates)
+      .eq('id', id);
+    
+    if (error) {
+      console.error(`Erro ao atualizar vendedor ${id}:`, error);
+      return false;
+    }
+    
+    return true;
+  },
+
+  // Excluir um vendedor
+  async delete(id: string): Promise<boolean> {
+    await this.checkAndInitializeSellersTable();
+    
+    const { error } = await supabase
+      .from('sellers')
+      .delete()
+      .eq('id', id);
+    
+    if (error) {
+      console.error(`Erro ao excluir vendedor ${id}:`, error);
+      return false;
+    }
+    
+    return true;
   }
 };

@@ -3,6 +3,7 @@ import ProductCarousel from '@/components/ProductCarousel';
 import ColorSection from '@/components/ColorSection';
 import { productService, collectionService, bannerService } from '@/services/supabaseService';
 import { TruckIcon, ShieldCheckIcon, HeadphonesIcon } from 'lucide-react';
+import ContactSellerSection from '@/components/ContactSellerSection';
 
 async function getData() {
   try {
@@ -65,6 +66,9 @@ export default async function Home() {
     <div className="min-h-screen">
       {/* Main Banner */}
       <Banner banner={firstBanner} />
+      
+      {/* Botão de contato com vendedor */}
+      <ContactSellerSection />
       
       {/* Promotion Products Carousel - mostrar primeiro */}
       {promotionProducts.length > 0 && (

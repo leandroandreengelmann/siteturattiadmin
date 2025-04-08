@@ -67,6 +67,19 @@ export interface Store {
   city: string;
   phone: string;
   hours?: string;
+  iconUrl?: string;     // URL para o ícone da loja
+  isActive?: boolean;   // Indica se a loja está ativa
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+// Seller model (Vendedor)
+export interface Seller {
+  id: string;
+  name: string;
+  storeId: string;      // ID da loja a qual o vendedor está associado
+  whatsapp: string;     // Número do WhatsApp do vendedor (com código do país)
+  isActive?: boolean;   // Indica se o vendedor está ativo
   createdAt?: string;
   updatedAt?: string;
 }
