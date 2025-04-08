@@ -297,62 +297,113 @@ export default function AdminColorsPage() {
         </div>
       ) : (
         <div className="bg-white rounded-lg shadow-md overflow-hidden">
-          <table className="w-full">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Cor
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Nome
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Coleção
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Código Hex
-                </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Ações
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
+          {/* Tabela para desktop */}
+          <div className="hidden md:block">
+            <table className="w-full">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Cor
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Nome
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Coleção
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Código Hex
+                  </th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Ações
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {colorsList.map((color) => (
+                  <tr key={color.id}>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div 
+                        className="h-8 w-8 rounded-full border border-gray-200"
+                        style={{ backgroundColor: color.hexCode || '#CCCCCC' }}
+                      />
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm font-medium text-gray-900">{color.name}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">{getCollectionName(color.collectionId)}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">{color.hexCode}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <button
+                        onClick={() => handleEdit(color)}
+                        className="text-blue-600 hover:text-blue-900 mr-4"
+                      >
+                        Editar
+                      </button>
+                      <button
+                        onClick={() => handleDelete(color.id)}
+                        className="text-red-600 hover:text-red-900"
+                      >
+                        Excluir
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          
+          {/* Cards para mobile */}
+          <div className="md:hidden">
+            <div className="grid grid-cols-1 gap-4 p-4">
               {colorsList.map((color) => (
-                <tr key={color.id}>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                <div key={color.id} className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+                  <div className="flex items-center mb-3">
                     <div 
-                      className="h-8 w-8 rounded-full border border-gray-200"
+                      className="h-12 w-12 rounded-lg border border-gray-200 flex-shrink-0 shadow-sm"
                       style={{ backgroundColor: color.hexCode || '#CCCCCC' }}
                     />
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">{color.name}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">{getCollectionName(color.collectionId)}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">{color.hexCode}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <div className="ml-4 flex-1">
+                      <div className="text-base font-medium text-gray-900">{color.name}</div>
+                      <div className="text-sm text-gray-500">
+                        Coleção: {getCollectionName(color.collectionId)}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="border-t border-gray-200 pt-3">
+                    <div className="text-sm text-gray-500">Código Hex:</div>
+                    <div className="text-sm font-mono font-medium text-gray-900">{color.hexCode}</div>
+                  </div>
+                  
+                  <div className="mt-3 flex justify-between border-t border-gray-200 pt-3">
                     <button
                       onClick={() => handleEdit(color)}
-                      className="text-blue-600 hover:text-blue-900 mr-4"
+                      className="inline-flex items-center px-3 py-1.5 border border-blue-700 text-sm font-medium rounded-md text-blue-700 bg-white hover:bg-blue-100 focus:outline-none"
                     >
+                      <svg className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                      </svg>
                       Editar
                     </button>
                     <button
                       onClick={() => handleDelete(color.id)}
-                      className="text-red-600 hover:text-red-900"
+                      className="inline-flex items-center px-3 py-1.5 border border-red-600 text-sm font-medium rounded-md text-red-600 bg-white hover:bg-red-50 focus:outline-none"
                     >
+                      <svg className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
                       Excluir
                     </button>
-                  </td>
-                </tr>
+                  </div>
+                </div>
               ))}
-            </tbody>
-          </table>
+            </div>
+          </div>
           
           {colorsList.length === 0 && (
             <div className="text-center py-8">

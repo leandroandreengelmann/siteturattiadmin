@@ -594,81 +594,159 @@ export default function AdminProductsPage() {
         </div>
       ) : (
         <div className="bg-white rounded-lg shadow-md overflow-hidden">
-          <table className="w-full">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Produto
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Preço
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Promoção
-                </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Ações
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {productsList.map((product) => (
-                <tr key={product.id}>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
-                      <div className="h-10 w-10 flex-shrink-0">
-                        {product.images && product.images.length > 0 ? (
-                          <img
-                            className="h-10 w-10 rounded-full object-cover"
-                            src={product.images.find(img => img.isMain)?.thumbnail || product.images[0].thumbnail}
-                            alt={product.name}
-                          />
-                        ) : (
-                          <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
-                            <svg className="h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                            </svg>
-                          </div>
-                        )}
+          {/* Tabela para desktop */}
+          <div className="hidden md:block">
+            <table className="w-full">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Produto
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Preço
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Promoção
+                  </th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Ações
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {productsList.map((product) => (
+                  <tr key={product.id}>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        <div className="h-10 w-10 flex-shrink-0">
+                          {product.images && product.images.length > 0 ? (
+                            <img
+                              className="h-10 w-10 rounded-full object-cover"
+                              src={product.images.find(img => img.isMain)?.thumbnail || product.images[0].thumbnail}
+                              alt={product.name}
+                            />
+                          ) : (
+                            <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
+                              <svg className="h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                              </svg>
+                            </div>
+                          )}
+                        </div>
+                        <div className="ml-4">
+                          <div className="text-sm font-medium text-gray-900">{product.name}</div>
+                        </div>
                       </div>
-                      <div className="ml-4">
-                        <div className="text-sm font-medium text-gray-900">{product.name}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">R$ {product.price.toFixed(2)}</div>
+                      {product.promoPrice && (
+                        <div className="text-sm text-red-600">R$ {product.promoPrice.toFixed(2)}</div>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                        product.isPromotion
+                          ? 'bg-green-100 text-green-800'
+                          : 'bg-gray-100 text-gray-800'
+                      }`}>
+                        {product.isPromotion ? 'Sim' : 'Não'}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <button
+                        onClick={() => handleEdit(product)}
+                        className="text-blue-600 hover:text-blue-900 mr-4"
+                      >
+                        Editar
+                      </button>
+                      <button
+                        onClick={() => handleDelete(product.id)}
+                        className="text-red-600 hover:text-red-900"
+                      >
+                        Excluir
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          
+          {/* Cards para mobile */}
+          <div className="md:hidden">
+            <div className="grid grid-cols-1 gap-4 p-4">
+              {productsList.map((product) => (
+                <div key={product.id} className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+                  <div className="flex items-center mb-3">
+                    <div className="h-12 w-12 flex-shrink-0">
+                      {product.images && product.images.length > 0 ? (
+                        <img
+                          className="h-12 w-12 rounded-lg object-cover"
+                          src={product.images.find(img => img.isMain)?.thumbnail || product.images[0].thumbnail}
+                          alt={product.name}
+                        />
+                      ) : (
+                        <div className="h-12 w-12 rounded-lg bg-gray-200 flex items-center justify-center">
+                          <svg className="h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
+                        </div>
+                      )}
+                    </div>
+                    <div className="ml-4 flex-1">
+                      <div className="text-base font-medium text-gray-900">{product.name}</div>
+                      <div className="flex items-center mt-1">
+                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                          product.isPromotion
+                            ? 'bg-green-100 text-green-800'
+                            : 'bg-gray-100 text-gray-800'
+                        }`}>
+                          {product.isPromotion ? 'Em promoção' : 'Preço normal'}
+                        </span>
                       </div>
                     </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">R$ {product.price.toFixed(2)}</div>
-                    {product.promoPrice && (
-                      <div className="text-sm text-red-600">R$ {product.promoPrice.toFixed(2)}</div>
-                    )}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                      product.isPromotion
-                        ? 'bg-green-100 text-green-800'
-                        : 'bg-gray-100 text-gray-800'
-                    }`}>
-                      {product.isPromotion ? 'Sim' : 'Não'}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                  </div>
+                  
+                  <div className="border-t border-gray-200 pt-3 mt-1">
+                    <div className="flex justify-between items-center mb-2">
+                      <div>
+                        <div className="text-sm text-gray-500">Preço normal:</div>
+                        <div className="text-sm font-medium text-gray-900">R$ {product.price.toFixed(2)}</div>
+                      </div>
+                      {product.promoPrice && (
+                        <div className="text-right">
+                          <div className="text-sm text-gray-500">Preço promocional:</div>
+                          <div className="text-sm font-medium text-red-600">R$ {product.promoPrice.toFixed(2)}</div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <div className="mt-3 flex justify-between border-t border-gray-200 pt-3">
                     <button
                       onClick={() => handleEdit(product)}
-                      className="text-blue-600 hover:text-blue-900 mr-4"
+                      className="inline-flex items-center px-3 py-1.5 border border-blue-700 text-sm font-medium rounded-md text-blue-700 bg-white hover:bg-blue-100 focus:outline-none"
                     >
+                      <svg className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                      </svg>
                       Editar
                     </button>
                     <button
                       onClick={() => handleDelete(product.id)}
-                      className="text-red-600 hover:text-red-900"
+                      className="inline-flex items-center px-3 py-1.5 border border-red-600 text-sm font-medium rounded-md text-red-600 bg-white hover:bg-red-50 focus:outline-none"
                     >
+                      <svg className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
                       Excluir
                     </button>
-                  </td>
-                </tr>
+                  </div>
+                </div>
               ))}
-            </tbody>
-          </table>
+            </div>
+          </div>
           
           {productsList.length === 0 && (
             <div className="text-center py-8">
