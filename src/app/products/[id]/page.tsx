@@ -5,7 +5,8 @@ import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Product, ProductImage } from '@/data/types';
-import ContactSellerButtonClient from '@/components/ContactSellerButtonClient';
+import { productService } from '@/services/localDataService';
+import { FaWhatsapp } from 'react-icons/fa';
 
 export default function ProductPage() {
   const params = useParams();
@@ -16,11 +17,12 @@ export default function ProductPage() {
   const [loading, setLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState<ProductImage | null>(null);
   const [imageLoading, setImageLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   
   useEffect(() => {
     async function loadProduct() {
       try {
-        const { productService } = await import('@/services/supabaseService');
+        setLoading(true);
         const productData = await productService.getById(productId);
         setProduct(productData);
         
@@ -29,8 +31,10 @@ export default function ProductPage() {
           const mainImage = productData.images.find(img => img.isMain) || productData.images[0];
           setSelectedImage(mainImage);
         }
+        setError(null);
       } catch (error) {
         console.error('Erro ao carregar produto:', error);
+        setError('Não foi possível carregar o produto. Tente novamente mais tarde.');
       } finally {
         setLoading(false);
       }
@@ -61,7 +65,7 @@ export default function ProductPage() {
     );
   }
   
-  if (!product) {
+  if (error || !product) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="bg-white rounded-xl shadow-sm p-8 text-center max-w-md">
@@ -69,7 +73,7 @@ export default function ProductPage() {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
           <h2 className="text-2xl font-bold text-gray-800 mb-4">Produto não encontrado</h2>
-          <p className="text-gray-600 mb-6">O produto que você está procurando pode ter sido removido ou não está disponível.</p>
+          <p className="text-gray-600 mb-6">{error || 'O produto que você está procurando pode ter sido removido ou não está disponível.'}</p>
           <Link 
             href="/products"
             className="bg-blue-700 hover:bg-blue-800 text-white px-6 py-3 rounded-lg inline-flex items-center transition duration-300"
@@ -190,11 +194,23 @@ export default function ProductPage() {
                           </span>
                         )}
                       </div>
+                      {product.installments && (
+                        <div className="mt-2 text-sm text-blue-600">
+                          Em até {product.installments}x sem juros
+                        </div>
+                      )}
                     </>
                   ) : (
-                    <span className="text-blue-600 text-3xl font-bold">
-                      R$ {product.price.toFixed(2).replace('.', ',')}
-                    </span>
+                    <>
+                      <span className="text-blue-600 text-3xl font-bold">
+                        R$ {product.price.toFixed(2).replace('.', ',')}
+                      </span>
+                      {product.installments && (
+                        <div className="mt-2 text-sm text-blue-600">
+                          Em até {product.installments}x sem juros
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
               </div>
@@ -208,7 +224,17 @@ export default function ProductPage() {
                 <h3 className="text-sm font-medium text-gray-500 uppercase">Precisa de ajuda?</h3>
                 
                 <div className="flex flex-col sm:flex-row gap-4">
-                  <ContactSellerButtonClient />
+                  <Link 
+                    href={`https://wa.me/44999999999?text=${encodeURIComponent(`Olá, gostaria de informações sobre o produto "${product.name}" (ID: ${productId}).`)}`} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="flex-1"
+                  >
+                    <button className="w-full bg-green-600 hover:bg-green-700 active:bg-green-800 text-white px-6 py-3 rounded-lg text-center transition duration-300 flex items-center justify-center shadow-sm">
+                      <FaWhatsapp className="mr-2 text-xl" />
+                      Falar com um vendedor
+                    </button>
+                  </Link>
                   
                   <button 
                     onClick={() => router.push('/products')}

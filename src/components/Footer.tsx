@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { Store } from '@/data/types';
+import { storeService } from '@/services/localDataService';
 
 export default function Footer() {
   const [showLoginModal, setShowLoginModal] = useState(false);
@@ -15,7 +16,6 @@ export default function Footer() {
   useEffect(() => {
     async function loadStores() {
       try {
-        const { storeService } = await import('@/services/supabaseService');
         const storeData = await storeService.getAll();
         setStores(storeData);
       } catch (error) {
@@ -39,31 +39,12 @@ export default function Footer() {
         return;
       }
       
-      // Importar o serviço de autenticação do Supabase
-      const { authService } = await import('@/services/supabaseService');
-      
-      // Formatar o email baseado no nome de usuário
-      const email = username.includes('@') ? username : `${username}@turatti.com`;
-      
-      console.log('Tentando login com Supabase:', { email });
-      
-      // Tentar fazer login com o Supabase
-      const { success, error } = await authService.login(email, password);
-      
-      if (success) {
-        console.log('Login com Supabase bem-sucedido');
+      // Simulação de login para demonstração
+      if (username === 'admin' && password === 'admin123') {
+        console.log('Login bem-sucedido');
         window.location.href = '/admin';
       } else {
-        console.error('Erro no login com Supabase:', error);
-        if (error?.message) {
-          setLoginError(
-            error.message.includes('Invalid login credentials') 
-              ? 'Credenciais inválidas. Verifique seu usuário e senha.' 
-              : `Erro no login: ${error.message}`
-          );
-        } else {
-          setLoginError('Erro ao fazer login. Tente novamente.');
-        }
+        setLoginError('Credenciais inválidas. Verifique seu usuário e senha.');
       }
     } catch (error) {
       console.error('Erro ao fazer login:', error);

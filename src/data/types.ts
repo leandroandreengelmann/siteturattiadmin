@@ -21,6 +21,9 @@ export interface Product {
   images: ProductImage[]; // Array de imagens substituindo o campo image anterior
   description: string;
   isPromotion: boolean;
+  installments?: number;  // Número de parcelas disponíveis para o produto
+  sellerName?: string;   // Nome do vendedor do produto
+  sellerPhone?: string;  // Número de telefone do vendedor
   createdAt?: string;
   updatedAt?: string;
 }
@@ -28,10 +31,6 @@ export interface Product {
 // Banner model
 export interface Banner {
   id: string;
-  title: string;
-  subtitle?: string;
-  buttonText?: string;
-  buttonLink?: string;
   imageUrl: string;     // URL para a imagem do banner
   isActive: boolean;    // Indica se o banner está ativo
   order?: number;       // Ordem de exibição para múltiplos banners

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Product } from '@/data/types';
 import ProductCard from './ProductCard';
 
@@ -12,6 +12,7 @@ interface ProductCarouselProps {
 export default function ProductCarousel({ products, title }: ProductCarouselProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [itemsPerPage, setItemsPerPage] = useState(5);
+  const [touchStartX, setTouchStartX] = useState(0);
 
   // Update items per page based on screen size
   useEffect(() => {
@@ -41,17 +42,50 @@ export default function ProductCarousel({ products, title }: ProductCarouselProp
 
   const totalPages = Math.ceil(products.length / itemsPerPage);
 
-  const handlePrev = () => {
+  const handlePrev = useCallback(() => {
     setCurrentIndex((prevIndex) => 
       prevIndex === 0 ? totalPages - 1 : prevIndex - 1
     );
-  };
+  }, [totalPages]);
 
-  const handleNext = () => {
+  const handleNext = useCallback(() => {
     setCurrentIndex((prevIndex) => 
       prevIndex === totalPages - 1 ? 0 : prevIndex + 1
     );
+  }, [totalPages]);
+
+  // Mobile touch handlers
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchStartX(e.touches[0].clientX);
   };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    const touchEndX = e.changedTouches[0].clientX;
+    const diff = touchStartX - touchEndX;
+    
+    // Swipe left (next)
+    if (diff > 50) {
+      handleNext();
+    }
+    // Swipe right (prev)
+    else if (diff < -50) {
+      handlePrev();
+    }
+  };
+
+  // Set up keyboard navigation
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowLeft') {
+        handlePrev();
+      } else if (e.key === 'ArrowRight') {
+        handleNext();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [handlePrev, handleNext]);
 
   const visibleProducts = products.slice(
     currentIndex * itemsPerPage,
@@ -59,15 +93,20 @@ export default function ProductCarousel({ products, title }: ProductCarouselProp
   );
 
   return (
-    <div className="py-8">
+    <div className="py-8 bg-gray-50">
       <div className="container mx-auto px-4">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-gray-800">{title}</h2>
+          <div className="flex items-center">
+            <div className="w-1 h-8 bg-blue-600 mr-3"></div>
+            <h2 className="text-2xl font-bold text-blue-600">
+              {title}
+            </h2>
+          </div>
           
           <div className="flex space-x-2">
             <button 
               onClick={handlePrev}
-              className="p-2 rounded-full bg-gray-200 hover:bg-gray-300 transition duration-300"
+              className="p-2 rounded-full bg-blue-100 hover:bg-blue-200 text-blue-600 transition duration-300"
               aria-label="Anterior"
             >
               <svg 
@@ -88,7 +127,7 @@ export default function ProductCarousel({ products, title }: ProductCarouselProp
             
             <button 
               onClick={handleNext}
-              className="p-2 rounded-full bg-gray-200 hover:bg-gray-300 transition duration-300"
+              className="p-2 rounded-full bg-blue-100 hover:bg-blue-200 text-blue-600 transition duration-300"
               aria-label="Próximo"
             >
               <svg 
@@ -109,7 +148,11 @@ export default function ProductCarousel({ products, title }: ProductCarouselProp
           </div>
         </div>
         
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+        <div 
+          className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6"
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+        >
           {visibleProducts.map((product) => (
             <ProductCard key={product.id} product={product} />
           ))}
@@ -122,8 +165,10 @@ export default function ProductCarousel({ products, title }: ProductCarouselProp
               <button
                 key={index}
                 onClick={() => setCurrentIndex(index)}
-                className={`w-3 h-3 rounded-full ${
-                  currentIndex === index ? 'bg-blue-700' : 'bg-gray-300'
+                className={`w-3 h-3 rounded-full transition-colors ${
+                  currentIndex === index 
+                    ? 'bg-blue-600' 
+                    : 'bg-gray-300 hover:bg-gray-400'
                 }`}
                 aria-label={`Ir para página ${index + 1}`}
               />

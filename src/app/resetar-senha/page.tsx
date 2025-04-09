@@ -15,18 +15,19 @@ export default function ResetarSenhaPage() {
   const router = useRouter();
   const { showToast } = useToast();
 
-  // Verificar se o token é válido ao carregar a página
+  // Simulação de verificação de token
   useEffect(() => {
     async function verificarToken() {
       try {
-        const { authService } = await import('@/services/supabaseService');
-        const { success } = await authService.verifyPasswordResetToken();
+        // Em uma aplicação real, verificaríamos o token na URL
+        // Nesta versão sem banco de dados, vamos apenas simular
         
-        setTokenValido(success);
+        // Simulação de um pequeno delay para dar feedback ao usuário
+        await new Promise(resolve => setTimeout(resolve, 1000));
         
-        if (!success) {
-          showToast('O link de redefinição é inválido ou expirou.', 'error');
-        }
+        // Simulamos que o token é válido para demonstração
+        setTokenValido(true);
+        
       } catch (error) {
         console.error('Erro ao verificar token:', error);
         setTokenValido(false);
@@ -54,23 +55,15 @@ export default function ResetarSenhaPage() {
     setIsLoading(true);
     
     try {
-      const { authService } = await import('@/services/supabaseService');
-      const { success, error } = await authService.resetPassword(senha);
+      // Em uma aplicação real, enviaríamos a nova senha para o servidor
+      // Nesta versão sem banco de dados, vamos apenas simular
       
-      if (success) {
-        setResetConcluido(true);
-        showToast('Senha redefinida com sucesso!', 'success');
-      } else {
-        let mensagemErro = 'Erro ao redefinir a senha.';
-        
-        if (error?.message) {
-          if (error.message.includes('Token expired')) {
-            mensagemErro = 'O link de redefinição expirou. Solicite um novo.';
-          }
-        }
-        
-        showToast(mensagemErro, 'error');
-      }
+      // Simulação de um pequeno delay para dar feedback ao usuário
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      setResetConcluido(true);
+      showToast('Senha redefinida com sucesso! (simulação)', 'success');
+      
     } catch (error) {
       console.error('Erro ao redefinir senha:', error);
       showToast('Ocorreu um erro. Tente novamente mais tarde.', 'error');
@@ -131,6 +124,9 @@ export default function ResetarSenhaPage() {
               <p className="text-gray-600 mb-6 font-inter">
                 Sua senha foi redefinida com sucesso! Agora você pode fazer login com sua nova senha.
               </p>
+              <p className="text-xs text-gray-500 mb-6 font-inter">
+                Nota: Esta é uma demonstração sem banco de dados. A senha não foi realmente alterada.
+              </p>
               <Link href="/">
                 <button className="px-4 py-2 bg-blue-700 hover:bg-blue-800 text-white rounded-md font-inter">
                   Ir para a página inicial
@@ -143,6 +139,9 @@ export default function ResetarSenhaPage() {
                 <h1 className="text-xl font-bold text-gray-800 mb-2 font-inter">Redefinir Senha</h1>
                 <p className="text-gray-600 font-inter">
                   Digite sua nova senha abaixo
+                </p>
+                <p className="text-xs text-gray-500 mt-2 font-inter">
+                  Nota: Esta é uma demonstração sem banco de dados.
                 </p>
               </div>
               

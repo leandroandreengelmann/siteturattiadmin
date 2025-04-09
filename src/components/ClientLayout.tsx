@@ -20,17 +20,38 @@ export default function ClientLayout({
     // Este código só executa no cliente para evitar problemas de hidratação
     setIsClient(true);
     
-    // Remover atributos que causam incompatibilidade de hidratação
-    const htmlElement = document.documentElement;
-    if (htmlElement.hasAttribute('tracking')) {
-      htmlElement.removeAttribute('tracking');
-    }
+    // Função para limpar atributos que causam incompatibilidade de hidratação
+    const cleanupHydrationAttributes = () => {
+      const htmlElement = document.documentElement;
+      
+      // Lista de atributos que podem causar problemas de hidratação
+      const problematicAttributes = ['tracking', 'data-new-gr-c-s-check-loaded', 'data-gr-ext-installed'];
+      
+      // Remover todos os atributos problemáticos
+      problematicAttributes.forEach(attr => {
+        if (htmlElement.hasAttribute(attr)) {
+          console.log(`Removendo atributo conflitante: ${attr}`);
+          htmlElement.removeAttribute(attr);
+        }
+      });
+      
+      // Adicionar atributo indicando que a hidratação foi concluída
+      htmlElement.setAttribute('data-hydrated', 'true');
+      
+      // Remover classe vsc-initialized que o VSCode adiciona
+      const bodyElement = document.body;
+      if (bodyElement.classList.contains('vsc-initialized')) {
+        bodyElement.classList.remove('vsc-initialized');
+      }
+    };
     
-    // Remover classe vsc-initialized que o VSCode adiciona
-    const bodyElement = document.body;
-    if (bodyElement.classList.contains('vsc-initialized')) {
-      bodyElement.classList.remove('vsc-initialized');
-    }
+    // Executar limpeza imediatamente
+    cleanupHydrationAttributes();
+    
+    // Também executar após um pequeno delay para capturar atributos que possam ser adicionados por extensões
+    const timeoutId = setTimeout(cleanupHydrationAttributes, 100);
+    
+    return () => clearTimeout(timeoutId);
   }, []);
   
   return (

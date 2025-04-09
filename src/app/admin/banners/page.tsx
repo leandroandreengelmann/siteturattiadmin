@@ -6,15 +6,12 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Banner } from '@/data/types';
 import { useToast } from '@/components/ToastProvider';
+import { bannerService } from '@/services/localDataService';
 
 export default function AdminBannersPage() {
   const [banners, setBanners] = useState<Banner[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentBanner, setCurrentBanner] = useState<Banner | null>(null);
-  const [title, setTitle] = useState('');
-  const [subtitle, setSubtitle] = useState('');
-  const [buttonText, setButtonText] = useState('');
-  const [buttonLink, setButtonLink] = useState('');
   const [isActive, setIsActive] = useState(true);
   const [order, setOrder] = useState(0);
   const [imageUrl, setImageUrl] = useState('');
@@ -26,35 +23,15 @@ export default function AdminBannersPage() {
   const { showToast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Verificar autenticação
+  // Carregar banners ao iniciar
   useEffect(() => {
-    async function checkAuth() {
-      try {
-        const { authService } = await import('@/services/supabaseService');
-        const session = await authService.getSession();
-        
-        if (!session) {
-          router.push('/');
-          return;
-        }
-        
-        // Carregar banners
-        loadBanners();
-      } catch (error) {
-        console.error('Erro ao verificar autenticação:', error);
-        showToast('Erro de autenticação', 'error');
-        router.push('/');
-      }
-    }
-    
-    checkAuth();
-  }, [router]);
+    loadBanners();
+  }, []);
 
-  // Carregar banners do Supabase
+  // Carregar banners do serviço local
   const loadBanners = async () => {
     try {
       setLoading(true);
-      const { bannerService } = await import('@/services/supabaseService');
       const data = await bannerService.getAll();
       setBanners(data);
     } catch (error) {
@@ -68,10 +45,6 @@ export default function AdminBannersPage() {
   // Limpar formulário
   const resetForm = () => {
     setCurrentBanner(null);
-    setTitle('');
-    setSubtitle('');
-    setButtonText('');
-    setButtonLink('');
     setIsActive(true);
     setOrder(0);
     setImageUrl('');
@@ -82,10 +55,6 @@ export default function AdminBannersPage() {
   // Editar banner existente
   const editBanner = (banner: Banner) => {
     setCurrentBanner(banner);
-    setTitle(banner.title);
-    setSubtitle(banner.subtitle || '');
-    setButtonText(banner.buttonText || '');
-    setButtonLink(banner.buttonLink || '');
     setIsActive(banner.isActive);
     setOrder(banner.order || 0);
     setImageUrl(banner.imageUrl);
@@ -96,9 +65,8 @@ export default function AdminBannersPage() {
   const handleDelete = async (banner: Banner) => {
     if (!banner.id) return;
     
-    if (window.confirm(`Tem certeza que deseja excluir o banner "${banner.title}"?`)) {
+    if (window.confirm(`Tem certeza que deseja excluir este banner?`)) {
       try {
-        const { bannerService } = await import('@/services/supabaseService');
         const success = await bannerService.delete(banner.id);
         
         if (success) {
@@ -131,42 +99,25 @@ export default function AdminBannersPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!title) {
-      showToast('O título é obrigatório', 'error');
+    if (!previewUrl && !imageUrl) {
+      showToast('É necessário selecionar uma imagem', 'error');
       return;
     }
 
     try {
       setSubmitting(true);
-      const { bannerService } = await import('@/services/supabaseService');
-      
-      // Fazer upload da imagem se um novo arquivo for selecionado
-      let finalImageUrl = imageUrl;
-      if (selectedFile) {
-        const uploadedUrl = await bannerService.uploadBannerImage(selectedFile);
-        if (!uploadedUrl) {
-          showToast('Erro ao fazer upload da imagem', 'error');
-          setSubmitting(false);
-          return;
-        }
-        finalImageUrl = uploadedUrl;
-      }
       
       // Criar objeto do banner
       const bannerData: Omit<Banner, 'id'> = {
-        title,
-        subtitle: subtitle || undefined,
-        buttonText: buttonText || undefined,
-        buttonLink: buttonLink || undefined,
-        imageUrl: finalImageUrl,
+        imageUrl: selectedFile ? previewUrl : imageUrl,
         isActive,
         order: Number(order) || 0
       };
       
       // Atualizar ou criar banner
       if (currentBanner?.id) {
-        const success = await bannerService.update(currentBanner.id, bannerData);
-        if (success) {
+        const updatedBanner = await bannerService.update(currentBanner.id, bannerData);
+        if (updatedBanner) {
           showToast('Banner atualizado com sucesso!', 'success');
         } else {
           showToast('Erro ao atualizar banner', 'error');
@@ -212,7 +163,7 @@ export default function AdminBannersPage() {
           
           <form onSubmit={handleSubmit}>
             {/* Imagem Preview */}
-            <div className="mb-4">
+            <div className="mb-6">
               <label className="block text-gray-700 font-medium mb-2 font-inter">
                 Imagem do Banner
               </label>
@@ -242,97 +193,51 @@ export default function AdminBannersPage() {
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded font-inter"
+                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded font-inter mt-2"
               >
                 Selecionar Imagem
               </button>
             </div>
             
-            {/* Campos do Formulário */}
-            <div className="mb-4">
-              <label className="block text-gray-700 font-medium mb-2 font-inter">
-                Título*
-              </label>
-              <input
-                type="text"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:border-blue-500 font-inter"
-                required
-              />
-            </div>
-            
-            <div className="mb-4">
-              <label className="block text-gray-700 font-medium mb-2 font-inter">
-                Subtítulo
-              </label>
-              <input
-                type="text"
-                value={subtitle}
-                onChange={(e) => setSubtitle(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:border-blue-500 font-inter"
-              />
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            {/* Status e Ordem */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
               <div>
-                <label className="block text-gray-700 font-medium mb-2 font-inter">
-                  Texto do Botão
-                </label>
-                <input
-                  type="text"
-                  value={buttonText}
-                  onChange={(e) => setButtonText(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:border-blue-500 font-inter"
-                />
+                <label className="block text-gray-700 font-medium mb-2">Status</label>
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    id="isActive"
+                    checked={isActive}
+                    onChange={(e) => setIsActive(e.target.checked)}
+                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  />
+                  <label htmlFor="isActive" className="ml-2 text-gray-700">
+                    Banner Ativo
+                  </label>
+                </div>
               </div>
               
               <div>
-                <label className="block text-gray-700 font-medium mb-2 font-inter">
-                  Link do Botão
-                </label>
-                <input
-                  type="text"
-                  value={buttonLink}
-                  onChange={(e) => setButtonLink(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:border-blue-500 font-inter"
-                />
-              </div>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-              <div>
-                <label className="block text-gray-700 font-medium mb-2 font-inter">
-                  Ordem
+                <label htmlFor="order" className="block text-gray-700 font-medium mb-2 font-inter">
+                  Ordem de Exibição
                 </label>
                 <input
                   type="number"
-                  value={order}
-                  onChange={(e) => setOrder(Number(e.target.value))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:border-blue-500 font-inter"
+                  id="order"
                   min="0"
+                  value={order}
+                  onChange={(e) => setOrder(parseInt(e.target.value) || 0)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 font-inter"
                 />
-              </div>
-              
-              <div className="flex items-center">
-                <label className="flex items-center mt-6 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={isActive}
-                    onChange={(e) => setIsActive(e.target.checked)}
-                    className="form-checkbox h-5 w-5 text-blue-600"
-                  />
-                  <span className="ml-2 text-gray-700 font-inter">Ativo</span>
-                </label>
               </div>
             </div>
             
-            {/* Botões */}
-            <div className="flex justify-between mt-6">
+            {/* Botões de Ação */}
+            <div className="flex justify-end space-x-2">
               <button
                 type="button"
                 onClick={resetForm}
-                className="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded font-inter"
+                className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 transition duration-300 font-inter"
               >
                 Cancelar
               </button>
@@ -340,9 +245,9 @@ export default function AdminBannersPage() {
               <button
                 type="submit"
                 disabled={submitting}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded font-inter disabled:opacity-50"
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition duration-300 font-inter disabled:opacity-70"
               >
-                {submitting ? 'Salvando...' : (currentBanner ? 'Atualizar' : 'Adicionar')}
+                {submitting ? 'Salvando...' : 'Salvar Banner'}
               </button>
             </div>
           </form>
@@ -350,59 +255,56 @@ export default function AdminBannersPage() {
         
         {/* Lista de Banners */}
         <div>
-          <h2 className="text-xl font-semibold mb-4 font-inter">Banners Atuais</h2>
+          <h2 className="text-xl font-semibold mb-4 font-inter">Banners Existentes</h2>
           
           {loading ? (
-            <p className="text-gray-600 font-inter">Carregando banners...</p>
+            <div className="flex justify-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-600"></div>
+            </div>
           ) : banners.length === 0 ? (
-            <p className="text-gray-600 font-inter">Nenhum banner cadastrado.</p>
+            <div className="bg-white p-6 rounded-lg shadow-md text-center text-gray-500 font-inter">
+              Nenhum banner cadastrado.
+            </div>
           ) : (
             <div className="space-y-4">
               {banners.map((banner) => (
-                <div 
-                  key={banner.id} 
-                  className={`bg-white p-4 rounded-lg shadow-md border-l-4 ${banner.isActive ? 'border-green-500' : 'border-gray-300'}`}
-                >
-                  <div className="flex">
-                    {/* Thumbnail */}
-                    <div className="relative h-20 w-32 mr-4 rounded overflow-hidden">
+                <div key={banner.id} className="bg-white p-4 rounded-lg shadow-md">
+                  <div className="flex flex-col sm:flex-row items-center">
+                    <div className="relative h-24 w-36 flex-shrink-0 mb-4 sm:mb-0 sm:mr-4">
                       <Image
                         src={banner.imageUrl}
-                        alt={banner.title}
+                        alt="Banner"
                         fill
-                        className="object-cover"
+                        className="object-cover rounded"
                       />
                     </div>
                     
-                    {/* Informações */}
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-lg font-inter">{banner.title}</h3>
-                      <p className="text-sm text-gray-500 font-inter">
-                        Ordem: {banner.order || 0} | 
-                        {banner.isActive ? (
-                          <span className="text-green-600"> Ativo</span>
-                        ) : (
-                          <span className="text-gray-500"> Inativo</span>
-                        )}
-                      </p>
+                    <div className="flex-grow">
+                      <div className="flex flex-wrap gap-2 mb-2">
+                        <span className={`px-2 py-0.5 text-xs rounded ${banner.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'} font-inter`}>
+                          {banner.isActive ? 'Ativo' : 'Inativo'}
+                        </span>
+                        <span className="px-2 py-0.5 text-xs rounded bg-blue-100 text-blue-800 font-inter">
+                          Ordem: {banner.order || 0}
+                        </span>
+                      </div>
+                      
+                      <div className="flex justify-end mt-2 space-x-2">
+                        <button
+                          onClick={() => editBanner(banner)}
+                          className="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition duration-300 font-inter"
+                        >
+                          Editar
+                        </button>
+                        
+                        <button
+                          onClick={() => handleDelete(banner)}
+                          className="px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700 transition duration-300 font-inter"
+                        >
+                          Excluir
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                  
-                  {/* Botões de ação */}
-                  <div className="mt-3 flex justify-end">
-                    <button
-                      onClick={() => editBanner(banner)}
-                      className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm mr-2 font-inter"
-                    >
-                      Editar
-                    </button>
-                    
-                    <button
-                      onClick={() => handleDelete(banner)}
-                      className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm font-inter"
-                    >
-                      Excluir
-                    </button>
                   </div>
                 </div>
               ))}

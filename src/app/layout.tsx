@@ -35,8 +35,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="pt-BR" className={`${geistSans.variable} ${geistMono.variable} ${inter.variable} antialiased`}>
-      <body className="font-inter min-h-screen flex flex-col">
+    <html lang="pt-BR" className={`${geistSans.variable} ${geistMono.variable} ${inter.variable} antialiased`} suppressHydrationWarning>
+      <body className="font-inter min-h-screen flex flex-col" suppressHydrationWarning>
         <ToastProvider>
           <ClientLayout>
             {children}

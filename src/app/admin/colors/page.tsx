@@ -5,10 +5,10 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Color, ColorCollection } from '@/data/types';
 import { useToast } from '@/components/ToastProvider';
+import { colorService, colorCollectionService } from '@/services/localDataService';
 
 export default function AdminColorsPage() {
   const router = useRouter();
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [colorsList, setColorsList] = useState<Color[]>([]);
   const [collections, setCollections] = useState<ColorCollection[]>([]);
   const [isEditing, setIsEditing] = useState(false);
@@ -20,36 +20,24 @@ export default function AdminColorsPage() {
   const [collectionId, setCollectionId] = useState('');
   const [hexCode, setHexCode] = useState('');
   
-  // Check if user is authenticated and load colors
+  // Carregar cores e coleções
   useEffect(() => {
-    async function init() {
+    async function loadData() {
       try {
-        // Verificar autenticação com Supabase
-        const { authService, colorService, collectionService } = await import('@/services/supabaseService');
-        const session = await authService.getSession();
-        
-        if (!session) {
-          // Redirecionar para a página inicial se não estiver autenticado
-          router.push('/');
-          return;
-        }
-        
-        setIsAuthenticated(true);
-        
-        // Carregar cores e coleções do Supabase
+        // Carregar cores e coleções do serviço local
         const colorsData = await colorService.getAll();
         setColorsList(colorsData);
         
-        const collectionsData = await collectionService.getAll();
+        const collectionsData = await colorCollectionService.getAll();
         setCollections(collectionsData);
       } catch (error) {
-        console.error('Erro ao verificar autenticação ou carregar dados:', error);
-        router.push('/');
+        console.error('Erro ao carregar dados:', error);
+        showToast('Erro ao carregar dados', 'error');
       }
     }
     
-    init();
-  }, [router]);
+    loadData();
+  }, []);
   
   // Set form data when editing a color
   useEffect(() => {
@@ -74,7 +62,6 @@ export default function AdminColorsPage() {
   const handleDelete = async (id: string) => {
     if (window.confirm('Tem certeza que deseja excluir esta cor?')) {
       try {
-        const { colorService } = await import('@/services/supabaseService');
         const success = await colorService.delete(id);
         
         if (success) {
@@ -114,8 +101,6 @@ export default function AdminColorsPage() {
     e.preventDefault();
     
     try {
-      const { colorService } = await import('@/services/supabaseService');
-      
       if (currentColor) {
         // Atualizar cor existente
         const updates: Partial<Color> = {
@@ -126,9 +111,9 @@ export default function AdminColorsPage() {
         
         console.log('Enviando atualização de cor:', updates);
         
-        const success = await colorService.update(currentColor.id, updates);
+        const updatedColor = await colorService.update(currentColor.id, updates);
         
-        if (success) {
+        if (updatedColor) {
           // Atualizar a lista local
           setColorsList(colorsList.map(c => 
             c.id === currentColor.id ? { ...c, ...updates } : c
@@ -145,8 +130,8 @@ export default function AdminColorsPage() {
         // Adicionar nova cor
         const newColor = {
           name,
-          collectionId, // Corrigido: usar camelCase para compatibilidade com o serviço
-          hexCode, // Corrigido: usar camelCase para compatibilidade com o serviço
+          collectionId,
+          hexCode,
         };
         
         console.log('Enviando nova cor:', newColor);
@@ -181,14 +166,6 @@ export default function AdminColorsPage() {
     const collection = collections.find(c => c.id === id);
     return collection ? collection.name : 'Desconhecida';
   };
-  
-  if (!isAuthenticated) {
-    return (
-      <div className="container mx-auto px-4 py-12 text-center">
-        <p>Verificando autenticação...</p>
-      </div>
-    );
-  }
   
   return (
     <div className="container mx-auto px-4 py-12">

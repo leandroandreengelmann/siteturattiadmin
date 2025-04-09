@@ -1,7 +1,7 @@
 import { ColorCollection, Color } from '@/data/types';
 import ColorItem from '@/components/ColorItem';
 import Link from 'next/link';
-import { collectionService, colorService } from '@/services/supabaseService';
+import { colorCollectionService as collectionService, colorService } from '@/services/localDataService';
 import { notFound } from 'next/navigation';
 
 // Configurações para evitar cache na Vercel
@@ -15,7 +15,7 @@ async function getCollectionData(id: string) {
     return { collection: null, colors: [] };
   }
   
-  const colors = await colorService.getByCollection(id);
+  const colors = await colorService.getByCollectionId(id);
   return { collection, colors };
 }
 

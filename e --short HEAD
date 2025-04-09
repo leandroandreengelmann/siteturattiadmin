@@ -1,5 +1,0 @@
-[33mcommit fbadf1a898a4c18227b5a117e82c130b376a7cf4[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m)[m
-Author: Leandro <leandro@example.com>
-Date:   Tue Apr 8 13:14:08 2025 -0300
-
-    Melhorias de UI/UX: Padronização dos cards de admin, adição do botão de contato com vendedor no cabeçalho e restrição da página de status

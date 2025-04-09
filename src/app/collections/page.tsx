@@ -1,6 +1,6 @@
-import ColorCollectionCard from '@/components/ColorCollectionCard';
-import { collectionService } from '@/services/supabaseService';
 import { ColorCollection } from '@/data/types';
+import ColorCollectionCard from '@/components/ColorCollectionCard';
+import { colorCollectionService as collectionService } from '@/services/localDataService';
 
 // Configurações para evitar cache na Vercel
 export const dynamic = 'force-dynamic';

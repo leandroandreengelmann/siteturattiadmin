@@ -1,4 +1,4 @@
-import { Product, ColorCollection, Color, Store } from './types';
+import { Product, ColorCollection, Color, Store, ProductImage } from './types';
 
 // Sample products data
 export const products: Product[] = [
@@ -7,7 +7,19 @@ export const products: Product[] = [
     name: 'Cimento Portland CP II 50kg',
     price: 39.90,
     promoPrice: 34.90,
-    image: 'https://via.placeholder.com/300x300?text=Cimento',
+    sellerName: 'João Silva',
+    sellerPhone: '44999887766',
+    installments: 3,
+    images: [
+      {
+        id: '1-1',
+        productId: '1',
+        highResolution: 'https://via.placeholder.com/300x300?text=Cimento',
+        standard: 'https://via.placeholder.com/300x300?text=Cimento',
+        thumbnail: 'https://via.placeholder.com/150x150?text=Cimento',
+        isMain: true
+      }
+    ],
     description: 'Cimento Portland de alta qualidade para construções residenciais e comerciais.',
     isPromotion: true,
   },
@@ -15,7 +27,19 @@ export const products: Product[] = [
     id: '2',
     name: 'Tijolo Cerâmico 8 Furos (Pacote com 100)',
     price: 199.90,
-    image: 'https://via.placeholder.com/300x300?text=Tijolo',
+    sellerName: 'Maria Oliveira',
+    sellerPhone: '44998765432',
+    installments: 10,
+    images: [
+      {
+        id: '2-1',
+        productId: '2',
+        highResolution: 'https://via.placeholder.com/300x300?text=Tijolo',
+        standard: 'https://via.placeholder.com/300x300?text=Tijolo',
+        thumbnail: 'https://via.placeholder.com/150x150?text=Tijolo',
+        isMain: true
+      }
+    ],
     description: 'Tijolo cerâmico de 8 furos, ideal para construção de paredes e divisórias.',
     isPromotion: false,
   },
@@ -24,7 +48,16 @@ export const products: Product[] = [
     name: 'Argamassa Colante AC-II 20kg',
     price: 29.90,
     promoPrice: 24.90,
-    image: 'https://via.placeholder.com/300x300?text=Argamassa',
+    images: [
+      {
+        id: '3-1',
+        productId: '3',
+        highResolution: 'https://via.placeholder.com/300x300?text=Argamassa',
+        standard: 'https://via.placeholder.com/300x300?text=Argamassa',
+        thumbnail: 'https://via.placeholder.com/150x150?text=Argamassa',
+        isMain: true
+      }
+    ],
     description: 'Argamassa colante para assentamento de revestimentos cerâmicos em áreas internas e externas.',
     isPromotion: true,
   },
@@ -32,7 +65,16 @@ export const products: Product[] = [
     id: '4',
     name: 'Areia Média (Saco 20kg)',
     price: 12.90,
-    image: 'https://via.placeholder.com/300x300?text=Areia',
+    images: [
+      {
+        id: '4-1',
+        productId: '4',
+        highResolution: 'https://via.placeholder.com/300x300?text=Areia',
+        standard: 'https://via.placeholder.com/300x300?text=Areia',
+        thumbnail: 'https://via.placeholder.com/150x150?text=Areia',
+        isMain: true
+      }
+    ],
     description: 'Areia média lavada para uso em argamassas, concretos e outros serviços de construção.',
     isPromotion: false,
   },
@@ -40,7 +82,16 @@ export const products: Product[] = [
     id: '5',
     name: 'Brita 1 (Saco 20kg)',
     price: 14.90,
-    image: 'https://via.placeholder.com/300x300?text=Brita',
+    images: [
+      {
+        id: '5-1',
+        productId: '5',
+        highResolution: 'https://via.placeholder.com/300x300?text=Brita',
+        standard: 'https://via.placeholder.com/300x300?text=Brita',
+        thumbnail: 'https://via.placeholder.com/150x150?text=Brita',
+        isMain: true
+      }
+    ],
     description: 'Brita 1 para uso em concretos e outros serviços de construção.',
     isPromotion: false,
   },
@@ -49,7 +100,16 @@ export const products: Product[] = [
     name: 'Telha Cerâmica Portuguesa (Pacote com 10)',
     price: 89.90,
     promoPrice: 79.90,
-    image: 'https://via.placeholder.com/300x300?text=Telha',
+    images: [
+      {
+        id: '6-1',
+        productId: '6',
+        highResolution: 'https://via.placeholder.com/300x300?text=Telha',
+        standard: 'https://via.placeholder.com/300x300?text=Telha',
+        thumbnail: 'https://via.placeholder.com/150x150?text=Telha',
+        isMain: true
+      }
+    ],
     description: 'Telha cerâmica tipo portuguesa, resistente e durável para coberturas residenciais.',
     isPromotion: true,
   },
@@ -57,7 +117,16 @@ export const products: Product[] = [
     id: '7',
     name: 'Vergalhão CA-50 10mm (Barra 12m)',
     price: 49.90,
-    image: 'https://via.placeholder.com/300x300?text=Vergalhao',
+    images: [
+      {
+        id: '7-1',
+        productId: '7',
+        highResolution: 'https://via.placeholder.com/300x300?text=Vergalhao',
+        standard: 'https://via.placeholder.com/300x300?text=Vergalhao',
+        thumbnail: 'https://via.placeholder.com/150x150?text=Vergalhao',
+        isMain: true
+      }
+    ],
     description: 'Vergalhão de aço CA-50 para uso em estruturas de concreto armado.',
     isPromotion: false,
   },
@@ -66,7 +135,16 @@ export const products: Product[] = [
     name: 'Tubo PVC 100mm para Esgoto (Barra 6m)',
     price: 79.90,
     promoPrice: 69.90,
-    image: 'https://via.placeholder.com/300x300?text=Tubo+PVC',
+    images: [
+      {
+        id: '8-1',
+        productId: '8',
+        highResolution: 'https://via.placeholder.com/300x300?text=Tubo+PVC',
+        standard: 'https://via.placeholder.com/300x300?text=Tubo+PVC',
+        thumbnail: 'https://via.placeholder.com/150x150?text=Tubo+PVC',
+        isMain: true
+      }
+    ],
     description: 'Tubo de PVC para sistemas de esgoto residenciais e comerciais.',
     isPromotion: true,
   },
@@ -74,7 +152,16 @@ export const products: Product[] = [
     id: '9',
     name: 'Massa Corrida PVA 18L',
     price: 69.90,
-    image: 'https://via.placeholder.com/300x300?text=Massa+Corrida',
+    images: [
+      {
+        id: '9-1',
+        productId: '9',
+        highResolution: 'https://via.placeholder.com/300x300?text=Massa+Corrida',
+        standard: 'https://via.placeholder.com/300x300?text=Massa+Corrida',
+        thumbnail: 'https://via.placeholder.com/150x150?text=Massa+Corrida',
+        isMain: true
+      }
+    ],
     description: 'Massa corrida PVA para nivelamento e acabamento de paredes internas.',
     isPromotion: false,
   },
@@ -83,7 +170,17 @@ export const products: Product[] = [
     name: 'Tinta Acrílica Suvinil 18L',
     price: 249.90,
     promoPrice: 219.90,
-    image: 'https://via.placeholder.com/300x300?text=Tinta',
+    installments: 12,
+    images: [
+      {
+        id: '10-1',
+        productId: '10',
+        highResolution: 'https://via.placeholder.com/300x300?text=Tinta',
+        standard: 'https://via.placeholder.com/300x300?text=Tinta',
+        thumbnail: 'https://via.placeholder.com/150x150?text=Tinta',
+        isMain: true
+      }
+    ],
     description: 'Tinta acrílica premium para paredes internas e externas.',
     isPromotion: true,
   },
@@ -200,9 +297,9 @@ export const colors: Color[] = [
   },
   {
     id: '12',
-    name: 'Vermelho Vinho',
+    name: 'Vermelho Borgonha',
     collectionId: '4',
-    hexCode: '#8B0000',
+    hexCode: '#800020',
   },
   
   // Neutros
@@ -231,22 +328,17 @@ export const stores: Store[] = [
   {
     id: '1',
     name: 'Turatti Centro',
-    city: 'São Paulo',
-    phone: '(11) 3456-7890',
-    hours: 'Segunda a Sábado: 8h às 18h',
+    city: 'Cuiabá',
+    phone: '(65) 3027-5865',
+    hours: 'Segunda a Sexta: 8h às 18h, Sábado: 8h às 13h',
+    isActive: true,
   },
   {
     id: '2',
-    name: 'Turatti Zona Norte',
-    city: 'São Paulo',
-    phone: '(11) 2345-6789',
-    hours: 'Segunda a Sábado: 8h às 18h',
-  },
-  {
-    id: '3',
-    name: 'Turatti Campinas',
-    city: 'Campinas',
-    phone: '(19) 3456-7890',
-    hours: 'Segunda a Sábado: 8h às 18h',
+    name: 'Turatti CPA',
+    city: 'Cuiabá',
+    phone: '(65) 3028-4335',
+    hours: 'Segunda a Sexta: 8h às 18h, Sábado: 8h às 13h',
+    isActive: true,
   },
 ];

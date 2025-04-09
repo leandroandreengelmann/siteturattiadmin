@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Product } from '@/data/types';
 
 interface ProductCardProps {
@@ -10,95 +11,114 @@ interface ProductCardProps {
 }
 
 export default function ProductCard({ product }: ProductCardProps) {
-  const [imageError, setImageError] = useState(false);
+  const router = useRouter();
   const [isHovered, setIsHovered] = useState(false);
   
-  const handleImageError = () => {
-    setImageError(true);
+  // Verificar se há imagem secundária disponível
+  const hasSecondaryImage = product.images && product.images.length > 1;
+  
+  // Imagem principal e secundária (se disponível)
+  const primaryImage = product.images && product.images.length > 0
+    ? product.images[0].standard
+    : '/placeholder-product.jpg';
+    
+  const secondaryImage = hasSecondaryImage 
+    ? product.images[1].standard 
+    : primaryImage;
+  
+  // Formatar preço para exibição
+  const formatPrice = (price: number) => {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL'
+    }).format(price);
   };
-
-  // Obter a imagem principal ou a primeira imagem disponível
-  const productImage = product.images && product.images.length > 0 
-    ? product.images.find(img => img.isMain) || product.images[0] 
-    : null;
-
-  // Usar a versão thumbnail ou standard da imagem
-  const imageUrl = productImage?.thumbnail || productImage?.standard || '';
-
-  // Calcular o desconto percentual se for uma promoção
-  const discountPercentage = product.isPromotion && product.promoPrice && product.price > 0
-    ? Math.round(((product.price - product.promoPrice) / product.price) * 100)
+  
+  // Calcular desconto percentual (se aplicável)
+  const discountPercentage = product.isPromotion && product.promoPrice 
+    ? Math.round(100 - (product.promoPrice * 100 / product.price))
     : 0;
-
+  
+  // Navegar para a página do produto
+  const handleClick = () => {
+    router.push(`/products/${product.id}`);
+  };
+  
   return (
     <div 
-      className="bg-white rounded-xl shadow-sm overflow-hidden transition-all duration-300 hover:shadow-lg group"
+      className="group bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <div className="relative aspect-square w-full overflow-hidden">
-        {/* Exibir imagem do produto se disponível */}
-        {imageUrl && imageUrl.startsWith('http') && !imageError ? (
-          <Image
-            src={imageUrl}
-            alt={product.name}
-            fill
-            sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
-            className={`object-contain transform duration-700 ease-out ${isHovered ? 'scale-110' : 'scale-100'}`}
-            onError={handleImageError}
-            loading="lazy"
-            priority={false}
-          />
-        ) : (
-          <div className="w-full h-full bg-gray-100 flex items-center justify-center">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 sm:h-12 sm:w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
+      <div 
+        className="aspect-square overflow-hidden relative cursor-pointer"
+        onClick={handleClick}
+      >
+        {product.isPromotion && discountPercentage > 0 && (
+          <div className="absolute top-2 left-2 z-10 bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded-md">
+            -{discountPercentage}%
           </div>
         )}
         
-        {/* Promotion badge - design moderno */}
-        {product.isPromotion && discountPercentage > 0 && (
-          <div className="absolute top-2 sm:top-3 right-2 sm:right-3 bg-blue-600 text-white font-medium px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-lg shadow-sm backdrop-blur-sm z-10">
-            <span className="text-xs sm:text-sm font-bold">-{discountPercentage}%</span>
-          </div>
-        )}
+        <Image
+          src={isHovered && hasSecondaryImage ? secondaryImage : primaryImage}
+          alt={product.name}
+          fill
+          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+          className="object-cover object-center transition-all duration-300 group-hover:scale-105"
+        />
+        
+        {/* Botão Ver produto no hover */}
+        <div className={`absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center opacity-0 transition-opacity duration-300 ${isHovered ? 'opacity-100' : ''}`}>
+          <button 
+            onClick={handleClick}
+            className="bg-white text-gray-900 font-medium px-4 py-2 rounded-md hover:bg-blue-600 hover:text-white transition-colors duration-200"
+          >
+            Ver produto
+          </button>
+        </div>
       </div>
       
-      <div className="p-3 sm:p-4">
-        <h3 className="text-gray-800 text-sm sm:text-base font-medium mb-1.5 sm:mb-2 line-clamp-2 group-hover:text-blue-700 transition-colors duration-200">
+      <div className="p-4">
+        <h3 className="text-sm text-gray-700 font-medium truncate hover:text-blue-600 cursor-pointer mb-1" onClick={handleClick}>
           {product.name}
         </h3>
         
-        <div className="mb-3 sm:mb-4 flex items-baseline gap-2">
-          {/* Show promotional price if available */}
+        <div className="mt-2 flex flex-col">
           {product.isPromotion && product.promoPrice ? (
             <>
-              <span className="text-blue-600 text-base sm:text-lg font-bold">
-                R$ {product.promoPrice.toFixed(2).replace('.', ',')}
-              </span>
-              <span className="line-through text-xs text-gray-500">
-                R$ {product.price.toFixed(2).replace('.', ',')}
-              </span>
+              <div className="flex flex-col">
+                <span className="text-xs text-gray-500 line-through">
+                  De: {formatPrice(product.price)}
+                </span>
+                <div className="flex items-center space-x-2">
+                  <span className="text-base font-bold text-blue-600">
+                    Por: {formatPrice(product.promoPrice)}
+                  </span>
+                  <span className="text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-sm">
+                    {discountPercentage}% OFF
+                  </span>
+                </div>
+              </div>
+              {product.installments && (
+                <span className="text-xs text-gray-600 mt-1">
+                  Em até {product.installments}x sem juros
+                </span>
+              )}
             </>
           ) : (
-            <span className="text-blue-600 text-base sm:text-lg font-bold">
-              R$ {product.price.toFixed(2).replace('.', ',')}
-            </span>
+            <>
+              <span className="text-base font-semibold text-gray-800">
+                {formatPrice(product.price)}
+              </span>
+              {product.installments && (
+                <span className="text-xs text-gray-600 mt-1">
+                  Em até {product.installments}x sem juros
+                </span>
+              )}
+            </>
           )}
         </div>
-        
-        <Link 
-          href={`/products/${product.id}`}
-          className="relative block w-full py-2 sm:py-2.5 overflow-hidden group-hover:before:translate-x-0 before:-translate-x-full before:absolute before:top-0 before:left-0 before:bottom-0 before:right-0 before:bg-blue-800 before:transition-transform before:duration-500 before:ease-out rounded-lg"
-        >
-          <span className="relative z-10 flex items-center justify-center text-center text-xs sm:text-sm font-medium transition duration-300 group-hover:text-white text-blue-700">
-            Ver detalhes
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 sm:h-4 sm:w-4 ml-1 transition-transform duration-300 group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-            </svg>
-          </span>
-        </Link>
       </div>
     </div>
   );

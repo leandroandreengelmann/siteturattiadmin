@@ -3,121 +3,96 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ColorCollection } from '@/data/types';
 import { useToast } from '@/components/ToastProvider';
+import { ColorCollection } from '@/data/types';
+import { colorCollectionService } from '@/services/localDataService';
 
 export default function AdminCollectionsPage() {
   const router = useRouter();
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const { showToast } = useToast();
   const [collectionsList, setCollectionsList] = useState<ColorCollection[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [currentCollection, setCurrentCollection] = useState<ColorCollection | null>(null);
-  const { showToast } = useToast();
   
-  // Form state
+  // Dados do formulário
   const [name, setName] = useState('');
-  const [representativeColor, setRepresentativeColor] = useState('');
   const [description, setDescription] = useState('');
+  const [representativeColor, setRepresentativeColor] = useState('#3b82f6');
   
-  // Check if user is authenticated and load collections
   useEffect(() => {
     async function init() {
       try {
-        // Verificar autenticação com Supabase
-        const { authService, collectionService } = await import('@/services/supabaseService');
-        const session = await authService.getSession();
-        
-        if (!session) {
-          // Redirecionar para a página inicial se não estiver autenticado
-          router.push('/');
-          return;
-        }
-        
-        setIsAuthenticated(true);
-        
-        // Carregar coleções do Supabase
-        const collectionsData = await collectionService.getAll();
-        setCollectionsList(collectionsData);
+        // Carregar coleções de cores
+        const collections = await colorCollectionService.getAll();
+        setCollectionsList(collections);
       } catch (error) {
-        console.error('Erro ao verificar autenticação ou carregar coleções:', error);
-        router.push('/');
+        console.error('Erro ao inicializar a página de coleções:', error);
+      } finally {
+        setIsLoading(false);
       }
     }
     
     init();
-  }, [router]);
-  
-  // Set form data when editing a collection
-  useEffect(() => {
-    if (currentCollection) {
-      setName(currentCollection.name);
-      // Garantir que usamos a propriedade em camelCase
-      setRepresentativeColor(currentCollection.representativeColor || '#000000');
-      setDescription(currentCollection.description);
-    }
-  }, [currentCollection]);
-  
+  }, []);
+
+  // Adicionar nova coleção
   const handleAddNew = () => {
     setIsEditing(true);
     setCurrentCollection(null);
     resetForm();
   };
-  
+
+  // Editar coleção existente
   const handleEdit = (collection: ColorCollection) => {
-    setIsEditing(true);
     setCurrentCollection(collection);
+    setName(collection.name);
+    setDescription(collection.description || '');
+    setRepresentativeColor(collection.representativeColor || '#3b82f6');
+    setIsEditing(true);
   };
-  
+
+  // Excluir coleção
   const handleDelete = async (id: string) => {
     if (window.confirm('Tem certeza que deseja excluir esta coleção?')) {
       try {
-        const { collectionService } = await import('@/services/supabaseService');
-        const success = await collectionService.delete(id);
+        const success = await colorCollectionService.delete(id);
         
         if (success) {
-          // Encontrar o nome da coleção para exibir no toast
-          const deletedCollection = collectionsList.find(c => c.id === id);
           setCollectionsList(collectionsList.filter(c => c.id !== id));
-          
-          // Mostrar toast de sucesso
-          if (deletedCollection) {
-            showToast(`Coleção "${deletedCollection.name}" excluída com sucesso!`, 'success');
-          } else {
-            showToast('Coleção excluída com sucesso!', 'success');
-          }
+          showToast('Coleção excluída com sucesso!', 'success');
         } else {
-          // Mostrar toast de erro
           showToast('Erro ao excluir coleção. Tente novamente.', 'error');
         }
       } catch (error) {
         console.error('Erro ao excluir coleção:', error);
-        // Mostrar toast de erro
-        showToast('Ocorreu um erro ao excluir a coleção. Tente novamente.', 'error');
+        showToast('Ocorreu um erro inesperado. Tente novamente.', 'error');
       }
     }
   };
-  
+
+  // Resetar formulário
   const resetForm = () => {
     setName('');
-    setRepresentativeColor('#000000');
     setDescription('');
+    setRepresentativeColor('#3b82f6');
   };
-  
+
+  // Cancelar edição
   const handleCancel = () => {
     setIsEditing(false);
     setCurrentCollection(null);
     resetForm();
   };
-  
+
+  // Submeter formulário
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     try {
-      const { collectionService } = await import('@/services/supabaseService');
-      
       if (currentCollection) {
         // Atualizar coleção existente
-        const updates: Partial<ColorCollection> = {
+        const updates = {
           name,
           representativeColor,
           description,
@@ -125,7 +100,7 @@ export default function AdminCollectionsPage() {
         
         console.log('Enviando atualização:', updates);
         
-        const success = await collectionService.update(currentCollection.id, updates);
+        const success = await colorCollectionService.update(currentCollection.id, updates);
         
         if (success) {
           // Atualizar a lista local
@@ -144,13 +119,13 @@ export default function AdminCollectionsPage() {
         // Adicionar nova coleção
         const newCollection = {
           name,
-          representativeColor, // Usar camelCase para compatibilidade com o serviço
+          representativeColor,
           description,
         };
         
         console.log('Enviando nova coleção:', newCollection);
         
-        const addedCollection = await collectionService.add(newCollection);
+        const addedCollection = await colorCollectionService.add(newCollection);
         
         if (addedCollection) {
           console.log('Coleção adicionada com sucesso:', addedCollection);
@@ -180,10 +155,11 @@ export default function AdminCollectionsPage() {
     setRepresentativeColor(value);
   };
   
-  if (!isAuthenticated) {
+  // Renderização da página
+  if (isLoading) {
     return (
       <div className="container mx-auto px-4 py-12 text-center">
-        <p>Verificando autenticação...</p>
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600 mx-auto"></div>
       </div>
     );
   }

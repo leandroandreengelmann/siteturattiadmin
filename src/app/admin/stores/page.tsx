@@ -3,187 +3,147 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { stores } from '@/data/sampleData';
-import { Store } from '@/data/types';
 import { useToast } from '@/components/ToastProvider';
+import { Store } from '@/data/types';
+import { storeService } from '@/services/localDataService';
 
 export default function AdminStoresPage() {
   const router = useRouter();
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const { showToast } = useToast();
   const [storesList, setStoresList] = useState<Store[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [currentStore, setCurrentStore] = useState<Store | null>(null);
-  const { showToast } = useToast();
   
-  // Form state
+  // Dados do formulário
   const [name, setName] = useState('');
   const [city, setCity] = useState('');
   const [phone, setPhone] = useState('');
   const [hours, setHours] = useState('');
-  const [iconUrl, setIconUrl] = useState('');
   const [isActive, setIsActive] = useState(true);
   
-  // Check if user is authenticated and load stores
   useEffect(() => {
     async function init() {
       try {
-        // Verificar autenticação com Supabase
-        const { authService, storeService } = await import('@/services/supabaseService');
-        const session = await authService.getSession();
-        
-        if (!session) {
-          // Redirecionar para a página inicial se não estiver autenticado
-          router.push('/');
-          return;
-        }
-        
-        setIsAuthenticated(true);
-        
-        // Carregar lojas do Supabase
-        const storesData = await storeService.getAll();
-        setStoresList(storesData);
+        // Carregar lojas
+        const stores = await storeService.getAll();
+        setStoresList(stores);
       } catch (error) {
-        console.error('Erro ao verificar autenticação ou carregar lojas:', error);
-        router.push('/');
+        console.error('Erro ao inicializar a página de lojas:', error);
+      } finally {
+        setIsLoading(false);
       }
     }
     
     init();
-  }, [router]);
-  
-  // Set form data when editing a store
-  useEffect(() => {
-    if (currentStore) {
-      setName(currentStore.name);
-      setCity(currentStore.city);
-      setPhone(currentStore.phone);
-      setHours(currentStore.hours || '');
-      setIconUrl(currentStore.iconUrl || '');
-      setIsActive(currentStore.isActive !== false);
-    }
-  }, [currentStore]);
-  
+  }, []);
+
+  // Adicionar nova loja
   const handleAddNew = () => {
     setIsEditing(true);
     setCurrentStore(null);
     resetForm();
   };
-  
+
+  // Editar loja existente
   const handleEdit = (store: Store) => {
-    setIsEditing(true);
     setCurrentStore(store);
+    setName(store.name);
+    setCity(store.city);
+    setPhone(store.phone || '');
+    setHours(store.hours || '');
+    setIsActive(store.isActive !== false);
+    setIsEditing(true);
   };
-  
+
+  // Excluir loja
   const handleDelete = async (id: string) => {
     if (window.confirm('Tem certeza que deseja excluir esta loja?')) {
       try {
-        const { storeService } = await import('@/services/supabaseService');
         const success = await storeService.delete(id);
         
         if (success) {
-          // Encontrar o nome da loja para exibir no toast
-          const deletedStore = storesList.find(s => s.id === id);
-          
-          // Atualizar a lista local
           setStoresList(storesList.filter(s => s.id !== id));
-          
-          // Mostrar toast de sucesso
-          if (deletedStore) {
-            showToast(`Loja "${deletedStore.name}" excluída com sucesso!`, 'success');
-          } else {
-            showToast('Loja excluída com sucesso!', 'success');
-          }
+          showToast('Loja excluída com sucesso!', 'success');
         } else {
-          // Mostrar toast de erro
-          showToast('Erro ao excluir a loja. Tente novamente.', 'error');
+          showToast('Erro ao excluir loja. Tente novamente.', 'error');
         }
       } catch (error) {
         console.error('Erro ao excluir loja:', error);
-        // Mostrar toast de erro
-        showToast('Ocorreu um erro ao excluir a loja. Tente novamente.', 'error');
+        showToast('Ocorreu um erro inesperado. Tente novamente.', 'error');
       }
     }
   };
-  
+
+  // Resetar formulário
   const resetForm = () => {
     setName('');
     setCity('');
     setPhone('');
     setHours('');
-    setIconUrl('');
     setIsActive(true);
   };
-  
+
+  // Cancelar edição
   const handleCancel = () => {
     setIsEditing(false);
     setCurrentStore(null);
     resetForm();
   };
-  
+
+  // Submeter formulário
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     try {
-      const { storeService } = await import('@/services/supabaseService');
-      
-      // Em vez de usar URLs externas, usamos um valor simples que será usado
-      // para gerar ícones dinâmicos usando a primeira letra do nome da loja
       const storeData = {
         name,
         city,
         phone,
         hours,
-        iconUrl: '', // String vazia em vez de null para compatibilidade com o tipo
         isActive
       };
       
       if (currentStore) {
-        // Atualizar loja existente no Supabase
-        const success = await storeService.update(currentStore.id, storeData);
+        // Atualizar loja existente
+        const updatedStore = await storeService.update(currentStore.id, storeData);
         
-        if (success) {
+        if (updatedStore) {
           // Atualizar a lista local
-          setStoresList(prevStores => 
-            prevStores.map(s => s.id === currentStore.id ? { ...s, ...storeData, id: currentStore.id } : s)
-          );
+          setStoresList(storesList.map(s => 
+            s.id === currentStore.id ? { ...s, ...storeData } : s
+          ));
           
-          // Mostrar toast de sucesso
           showToast(`Loja "${name}" atualizada com sucesso!`, 'success');
         } else {
-          // Mostrar toast de erro
-          showToast('Erro ao atualizar a loja. Tente novamente.', 'error');
+          showToast('Erro ao atualizar loja. Tente novamente.', 'error');
         }
       } else {
-        // Adicionar nova loja no Supabase
+        // Adicionar nova loja
         const newStore = await storeService.add(storeData);
         
         if (newStore) {
-          // Adicionar à lista local
-          setStoresList(prevStores => [...prevStores, newStore]);
-          
-          // Mostrar toast de sucesso
+          setStoresList([...storesList, newStore]);
           showToast(`Loja "${name}" adicionada com sucesso!`, 'success');
         } else {
-          // Mostrar toast de erro
-          showToast('Erro ao adicionar a loja. Tente novamente.', 'error');
+          showToast('Erro ao adicionar loja. Tente novamente.', 'error');
         }
       }
       
-      // Reset form
       setIsEditing(false);
       setCurrentStore(null);
       resetForm();
     } catch (error) {
       console.error('Erro ao salvar loja:', error);
-      // Mostrar toast de erro
-      showToast('Ocorreu um erro ao salvar a loja. Tente novamente.', 'error');
+      showToast('Ocorreu um erro inesperado. Tente novamente.', 'error');
     }
   };
   
-  if (!isAuthenticated) {
+  // Renderização da página
+  if (isLoading) {
     return (
       <div className="container mx-auto px-4 py-12 text-center">
-        <p>Verificando autenticação...</p>
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600 mx-auto"></div>
       </div>
     );
   }
@@ -231,6 +191,20 @@ export default function AdminStoresPage() {
               </div>
               
               <div>
+                <label className="block text-gray-700 mb-2" htmlFor="phone">
+                  Telefone *
+                </label>
+                <input
+                  type="tel"
+                  id="phone"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                />
+              </div>
+              
+              <div>
                 <label className="block text-gray-700 mb-2" htmlFor="city">
                   Cidade *
                 </label>
@@ -240,21 +214,6 @@ export default function AdminStoresPage() {
                   value={city}
                   onChange={(e) => setCity(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  required
-                />
-              </div>
-              
-              <div>
-                <label className="block text-gray-700 mb-2" htmlFor="phone">
-                  Telefone *
-                </label>
-                <input
-                  type="text"
-                  id="phone"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="(00) 0000-0000"
                   required
                 />
               </div>
@@ -273,22 +232,16 @@ export default function AdminStoresPage() {
                 />
               </div>
               
-              <div>
-                <label className="block text-gray-700 mb-2">
-                  Status
-                </label>
-                <div className="flex items-center space-x-2">
+              <div className="md:col-span-2">
+                <label className="flex items-center cursor-pointer">
                   <input
                     type="checkbox"
-                    id="isActive"
                     checked={isActive}
-                    onChange={(e) => setIsActive(e.target.checked)}
-                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    onChange={() => setIsActive(!isActive)}
+                    className="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                   />
-                  <label htmlFor="isActive" className="text-gray-700">
-                    Loja Ativa
-                  </label>
-                </div>
+                  <span className="ml-2 text-gray-700">Loja em funcionamento</span>
+                </label>
               </div>
             </div>
             
@@ -311,71 +264,62 @@ export default function AdminStoresPage() {
           </form>
         </div>
       ) : (
-        <div className="bg-white rounded-lg shadow-md overflow-hidden">
-          <table className="w-full">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Nome
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Cidade
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Telefone
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Ações
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {storesList.map((store) => (
-                <tr key={store.id}>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">{store.name}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">{store.city}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">{store.phone}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span
-                      className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                        store.isActive !== false
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-red-100 text-red-800'
-                      }`}
-                    >
-                      {store.isActive !== false ? 'Ativa' : 'Inativa'}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <button
-                      onClick={() => handleEdit(store)}
-                      className="text-blue-600 hover:text-blue-900 mr-4"
-                    >
-                      Editar
-                    </button>
-                    <button
-                      onClick={() => handleDelete(store.id)}
-                      className="text-red-600 hover:text-red-900"
-                    >
-                      Excluir
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {storesList.map((store) => (
+            <div key={store.id} className="bg-white rounded-lg shadow-md overflow-hidden">
+              <div className="p-5">
+                <h3 className="text-lg font-semibold text-gray-800">{store.name}</h3>
+                <p className="text-sm text-gray-600 mt-2">{store.city}</p>
+                
+                {store.phone && (
+                  <p className="text-sm text-gray-600 mt-1">
+                    <span className="font-medium">Telefone:</span> {store.phone}
+                  </p>
+                )}
+                
+                {store.hours && (
+                  <p className="text-sm text-gray-600 mt-1">
+                    <span className="font-medium">Horário:</span> {store.hours}
+                  </p>
+                )}
+                
+                <div className="mt-3">
+                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                    store.isActive !== false
+                      ? 'bg-green-100 text-green-800'
+                      : 'bg-red-100 text-red-800'
+                  }`}>
+                    {store.isActive !== false ? 'Em funcionamento' : 'Fechada'}
+                  </span>
+                </div>
+                
+                <div className="flex justify-between mt-4 pt-4 border-t border-gray-100">
+                  <button
+                    onClick={() => handleEdit(store)}
+                    className="inline-flex items-center px-3 py-1.5 border border-blue-700 text-sm font-medium rounded-md text-blue-700 bg-white hover:bg-blue-100 focus:outline-none"
+                  >
+                    <svg className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                    Editar
+                  </button>
+                  
+                  <button
+                    onClick={() => handleDelete(store.id)}
+                    className="inline-flex items-center px-3 py-1.5 border border-red-600 text-sm font-medium rounded-md text-red-600 bg-white hover:bg-red-50 focus:outline-none"
+                  >
+                    <svg className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                    Excluir
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
           
           {storesList.length === 0 && (
-            <div className="text-center py-8">
+            <div className="col-span-full text-center py-8">
               <p className="text-gray-500">Nenhuma loja cadastrada.</p>
             </div>
           )}

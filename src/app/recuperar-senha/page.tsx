@@ -25,30 +25,16 @@ export default function RecuperarSenhaPage() {
         return;
       }
       
-      // Importar o serviço de autenticação do Supabase
-      const { authService } = await import('@/services/supabaseService');
+      // Em uma aplicação real, aqui enviaríamos o e-mail de recuperação
+      // Nesta versão sem banco de dados, vamos apenas simular o envio
       
-      // Solicitar redefinição de senha
-      const { success, error } = await authService.requestPasswordReset(email);
+      // Simulação de um pequeno delay para dar feedback ao usuário
+      await new Promise(resolve => setTimeout(resolve, 1500));
       
       setIsLoading(false);
+      setEmailEnviado(true);
+      showToast('Um link de recuperação foi enviado para seu e-mail! (simulação)', 'success');
       
-      if (success) {
-        setEmailEnviado(true);
-        showToast('Um link de recuperação foi enviado para seu e-mail!', 'success');
-      } else {
-        let errorMessage = 'Erro ao processar a solicitação.';
-        
-        if (error?.message) {
-          if (error.message.includes('Email not confirmed')) {
-            errorMessage = 'Este e-mail ainda não foi confirmado.';
-          } else if (error.message.includes('Email not found')) {
-            errorMessage = 'E-mail não encontrado.';
-          }
-        }
-        
-        showToast(errorMessage, 'error');
-      }
     } catch (error) {
       setIsLoading(false);
       console.error('Erro ao solicitar redefinição de senha:', error);
@@ -122,6 +108,9 @@ export default function RecuperarSenhaPage() {
               <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-md">
                 <p className="text-green-800 font-inter">
                   Verifique sua caixa de entrada e siga as instruções enviadas para redefinir sua senha.
+                </p>
+                <p className="text-xs text-gray-600 mt-2 font-inter">
+                  Nota: Esta é uma demonstração sem banco de dados. Nenhum e-mail será enviado.
                 </p>
               </div>
               

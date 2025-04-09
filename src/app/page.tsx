@@ -1,7 +1,7 @@
 import Banner from '@/components/Banner';
 import ProductCarousel from '@/components/ProductCarousel';
 import ColorSection from '@/components/ColorSection';
-import { productService, collectionService, bannerService } from '@/services/supabaseService';
+import { productService, colorCollectionService, bannerService } from '@/services/localDataService';
 import { TruckIcon, ShieldCheckIcon, HeadphonesIcon } from 'lucide-react';
 import ContactSellerSection from '@/components/ContactSellerSection';
 
@@ -16,7 +16,7 @@ async function getData() {
     ] = await Promise.allSettled([
       productService.getPromotions(),
       productService.getNonPromotions(),
-      collectionService.getAll(),
+      colorCollectionService.getAll(),
       bannerService.getActive()
     ]);
     
@@ -56,7 +56,7 @@ async function getData() {
 }
 
 export default async function Home() {
-  // Buscar dados do Supabase
+  // Buscar dados locais
   const { promotionProducts, featuredProducts, colorCollections, banners } = await getData();
   
   // Obter o primeiro banner ativo, se houver algum

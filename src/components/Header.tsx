@@ -41,6 +41,9 @@ export default function Header() {
   }, [isMenuOpen]);
 
   const headerHeight = scrolled ? '56px' : '64px';
+  
+  // Mensagem padrão para contato
+  const prefilledText = "Olá, gostaria de informações sobre produtos da Turatti Materiais para Construção.";
 
   return (
     <header 
@@ -124,6 +127,7 @@ export default function Header() {
             buttonText="Fale com um vendedor"
             className="px-3 lg:px-4 py-2 text-sm lg:text-base"
             compact={true}
+            prefilledText={prefilledText}
           />
         </nav>
 
@@ -164,6 +168,7 @@ export default function Header() {
                 buttonText="Fale com um vendedor"
                 className="px-4 py-3 w-full"
                 compact={false}
+                prefilledText={prefilledText}
               />
             </div>
           </nav>
