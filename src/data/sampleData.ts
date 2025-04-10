@@ -771,7 +771,7 @@ export const colors: Color[] = [
 export const stores: Store[] = [
   {
     id: '1',
-    name: 'Turatti Centro',
+    name: 'Turatti de Matupá',
     city: 'Cuiabá',
     phone: '(65) 3027-5865',
     hours: 'Segunda a Sexta: 8h às 18h, Sábado: 8h às 13h',
@@ -779,7 +779,7 @@ export const stores: Store[] = [
   },
   {
     id: '2',
-    name: 'Turatti CPA',
+    name: 'Turatti de Peixoto de azevedo',
     city: 'Cuiabá',
     phone: '(65) 3028-4335',
     hours: 'Segunda a Sexta: 8h às 18h, Sábado: 8h às 13h',

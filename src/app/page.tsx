@@ -1,34 +1,24 @@
-import Banner from '@/components/Banner';
-import ProductCarousel from '@/components/ProductCarousel';
-import ColorSection from '@/components/ColorSection';
+import Link from 'next/link';
+import Image from 'next/image';
+import { Truck as TruckIcon, ShieldCheck as ShieldCheckIcon, Headphones as HeadphonesIcon } from 'lucide-react';
 import { productService, colorCollectionService, bannerService } from '@/services/localDataService';
-import { TruckIcon, ShieldCheckIcon, HeadphonesIcon } from 'lucide-react';
+import { Product, ColorCollection } from '@/data/types';
+import ColorSection from '@/components/ColorSection';
 import ContactSellerSection from '@/components/ContactSellerSection';
+import Banner from '@/components/Banner';
 
 async function getData() {
   try {
     // Buscar dados em paralelo para melhor performance e tolerância a falhas
     const [
-      promotionProductsPromise,
-      featuredProductsPromise, 
       colorCollectionsPromise,
       bannersPromise
     ] = await Promise.allSettled([
-      productService.getPromotions(),
-      productService.getNonPromotions(),
       colorCollectionService.getAll(),
       bannerService.getActive()
     ]);
     
     // Extrair resultados com fallbacks para evitar quebras
-    const promotionProducts = promotionProductsPromise.status === 'fulfilled' 
-      ? promotionProductsPromise.value 
-      : [];
-      
-    const featuredProducts = featuredProductsPromise.status === 'fulfilled' 
-      ? featuredProductsPromise.value 
-      : [];
-      
     const colorCollections = colorCollectionsPromise.status === 'fulfilled' 
       ? colorCollectionsPromise.value 
       : [];
@@ -38,8 +28,6 @@ async function getData() {
       : [];
     
     return {
-      promotionProducts,
-      featuredProducts,
       colorCollections,
       banners
     };
@@ -47,8 +35,6 @@ async function getData() {
     console.error('Erro ao buscar dados da página inicial:', error);
     // Retornar valores padrão para evitar quebrar a página
     return {
-      promotionProducts: [],
-      featuredProducts: [],
       colorCollections: [],
       banners: []
     };
@@ -57,7 +43,7 @@ async function getData() {
 
 export default async function Home() {
   // Buscar dados locais
-  const { promotionProducts, featuredProducts, colorCollections, banners } = await getData();
+  const { colorCollections, banners } = await getData();
   
   // Obter o primeiro banner ativo, se houver algum
   const firstBanner = banners.length > 0 ? banners[0] : undefined;
@@ -69,24 +55,6 @@ export default async function Home() {
       
       {/* Botão de contato com vendedor */}
       <ContactSellerSection />
-      
-      {/* Promotion Products Carousel - mostrar primeiro */}
-      {promotionProducts.length > 0 && (
-        <ProductCarousel 
-          products={promotionProducts} 
-          title="Promoções do Mês" 
-          autoplaySpeed={6000}
-        />
-      )}
-      
-      {/* Featured Products Carousel */}
-      {featuredProducts.length > 0 && (
-        <ProductCarousel 
-          products={featuredProducts} 
-          title="Produtos em Destaque" 
-          autoplaySpeed={8000}
-        />
-      )}
       
       {/* Colors Section */}
       <ColorSection collections={colorCollections} />
