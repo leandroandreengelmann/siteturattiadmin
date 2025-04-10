@@ -19,11 +19,15 @@ export default function ProductCard({ product }: ProductCardProps) {
   
   // Imagem principal e secundária (se disponível)
   const primaryImage = product.images && product.images.length > 0
-    ? product.images[0].standard
+    ? (typeof product.images[0] === 'string' 
+      ? product.images[0] 
+      : product.images[0].standard)
     : '/placeholder-product.jpg';
     
   const secondaryImage = hasSecondaryImage 
-    ? product.images[1].standard 
+    ? (typeof product.images[1] === 'string'
+      ? product.images[1]
+      : product.images[1].standard)
     : primaryImage;
   
   // Formatar preço para exibição
@@ -100,22 +104,12 @@ export default function ProductCard({ product }: ProductCardProps) {
                   </span>
                 </div>
               </div>
-              {product.installments && (
-                <span className="text-xs text-gray-600 mt-1">
-                  Em até {product.installments}x sem juros
-                </span>
-              )}
             </>
           ) : (
             <>
               <span className="text-base font-semibold text-gray-800">
                 {formatPrice(product.price)}
               </span>
-              {product.installments && (
-                <span className="text-xs text-gray-600 mt-1">
-                  Em até {product.installments}x sem juros
-                </span>
-              )}
             </>
           )}
         </div>
