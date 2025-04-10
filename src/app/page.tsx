@@ -75,6 +75,7 @@ export default async function Home() {
         <ProductCarousel 
           products={promotionProducts} 
           title="Promoções do Mês" 
+          autoplaySpeed={6000}
         />
       )}
       
@@ -83,6 +84,7 @@ export default async function Home() {
         <ProductCarousel 
           products={featuredProducts} 
           title="Produtos em Destaque" 
+          autoplaySpeed={8000}
         />
       )}
       

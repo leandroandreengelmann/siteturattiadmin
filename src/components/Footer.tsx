@@ -78,17 +78,17 @@ export default function Footer() {
             <h3 className="text-xl font-bold mb-4">Links Rápidos</h3>
             <ul className="space-y-2">
               <li>
-                <Link href="/" className="hover:text-blue-300">
+                <Link href="/" className="text-lg hover:text-blue-300">
                   Início
                 </Link>
               </li>
               <li>
-                <Link href="/products" className="hover:text-blue-300">
+                <Link href="/products" className="text-lg hover:text-blue-300">
                   Produtos
                 </Link>
               </li>
               <li>
-                <Link href="/collections" className="hover:text-blue-300">
+                <Link href="/collections" className="text-lg hover:text-blue-300">
                   Cores Suvinil
                 </Link>
               </li>
@@ -155,7 +155,7 @@ export default function Footer() {
             )}
             <form onSubmit={handleLogin}>
               <div className="mb-4">
-                <label htmlFor="username" className="block text-gray-700 mb-2">
+                <label htmlFor="username" className="block text-lg text-gray-700 mb-2">
                   Usuário
                 </label>
                 <input
@@ -163,13 +163,13 @@ export default function Footer() {
                   id="username"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-800"
+                  className="w-full h-[47px] px-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700 transition-colors"
                   required
                   disabled={isLoading}
                 />
               </div>
               <div className="mb-4">
-                <label htmlFor="password" className="block text-gray-700 mb-2">
+                <label htmlFor="password" className="block text-lg text-gray-700 mb-2">
                   Senha
                 </label>
                 <input
@@ -177,7 +177,7 @@ export default function Footer() {
                   id="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-800"
+                  className="w-full h-[47px] px-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-700 transition-colors"
                   required
                   disabled={isLoading}
                 />
@@ -185,7 +185,7 @@ export default function Footer() {
               <div className="mb-4">
                 <Link 
                   href="/recuperar-senha" 
-                  className="text-sm text-blue-600 hover:text-blue-800"
+                  className="text-lg text-blue-600 hover:text-blue-800"
                   onClick={() => setShowLoginModal(false)}
                 >
                   Esqueceu a senha?

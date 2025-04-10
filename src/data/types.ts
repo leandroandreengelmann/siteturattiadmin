@@ -18,10 +18,12 @@ export interface Product {
   name: string;
   price: number;
   promoPrice?: number;
-  images: ProductImage[]; // Array de imagens substituindo o campo image anterior
+  images: ProductImage[] | string[]; // Array de imagens ou URLs
   description: string;
   isPromotion: boolean;
-  installments?: number;  // Número de parcelas disponíveis para o produto
+  active?: boolean;     // Indica se o produto está ativo para venda
+  stock?: number;       // Quantidade em estoque do produto
+  installments?: number; // Número de parcelas disponíveis para o produto
   sellerName?: string;   // Nome do vendedor do produto
   sellerPhone?: string;  // Número de telefone do vendedor
   createdAt?: string;

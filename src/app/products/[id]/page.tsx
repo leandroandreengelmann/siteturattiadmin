@@ -4,9 +4,11 @@ import { useParams, useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Product, ProductImage } from '@/data/types';
+import { Product } from '@/data/types';
 import { productService } from '@/services/localDataService';
+import ContactSellerButtonClient from '@/components/ContactSellerButtonClient';
 import { FaWhatsapp } from 'react-icons/fa';
+import StoreSellerModal from '@/components/StoreSellerModal';
 
 export default function ProductPage() {
   const params = useParams();
@@ -15,9 +17,9 @@ export default function ProductPage() {
   
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
-  const [selectedImage, setSelectedImage] = useState<ProductImage | null>(null);
   const [imageLoading, setImageLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   
   useEffect(() => {
     async function loadProduct() {
@@ -25,12 +27,6 @@ export default function ProductPage() {
         setLoading(true);
         const productData = await productService.getById(productId);
         setProduct(productData);
-        
-        // Definir a imagem inicial (principal ou primeira)
-        if (productData && productData.images && productData.images.length > 0) {
-          const mainImage = productData.images.find(img => img.isMain) || productData.images[0];
-          setSelectedImage(mainImage);
-        }
         setError(null);
       } catch (error) {
         console.error('Erro ao carregar produto:', error);
@@ -43,98 +39,91 @@ export default function ProductPage() {
     loadProduct();
   }, [productId]);
   
-  // Função para trocar a imagem selecionada
-  const handleSelectImage = (image: ProductImage) => {
-    setImageLoading(true);
-    setSelectedImage(image);
-  };
-
-  // Calcular o desconto percentual se for uma promoção
   const calculateDiscount = () => {
     if (product?.isPromotion && product?.promoPrice && product?.price > 0) {
-      return Math.round(((product.price - product.promoPrice) / product.price) * 100);
+      const discount = ((product.price - product.promoPrice) / product.price) * 100;
+      return Math.round(discount);
     }
     return 0;
   };
   
+  // Get the image URL
+  const getImageUrl = () => {
+    if (!product || !product.images || product.images.length === 0) {
+      return '/placeholder-product.png';
+    }
+    
+    const image = product.images[0];
+    if (typeof image === 'string') {
+      return image;
+    }
+    
+    return image.highResolution || image.standard || '/placeholder-product.png';
+  };
+  
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-700"></div>
+      <div className="container mx-auto p-4">
+        <div className="flex justify-center items-center h-40">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600"></div>
+        </div>
       </div>
     );
   }
   
   if (error || !product) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="bg-white rounded-xl shadow-sm p-8 text-center max-w-md">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 mx-auto text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          <h2 className="text-2xl font-bold text-gray-800 mb-4">Produto não encontrado</h2>
-          <p className="text-gray-600 mb-6">{error || 'O produto que você está procurando pode ter sido removido ou não está disponível.'}</p>
-          <Link 
-            href="/products"
-            className="bg-blue-700 hover:bg-blue-800 text-white px-6 py-3 rounded-lg inline-flex items-center transition duration-300"
+      <div className="container mx-auto p-4">
+        <div className="bg-red-50 p-6 rounded-lg text-center">
+          <h2 className="text-xl font-bold text-red-600 mb-2">Erro ao carregar produto</h2>
+          <p className="text-red-700">{error || 'Produto não encontrado'}</p>
+          <button 
+            onClick={() => router.push('/products')}
+            className="mt-4 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg"
           >
-            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-            </svg>
-            Ver todos os produtos
-          </Link>
+            Voltar para produtos
+          </button>
         </div>
       </div>
     );
   }
   
-  // URL da imagem atual (selecionada ou principal ou primeira)
-  const currentImageUrl = selectedImage?.standard || 
-    (product.images && product.images.length > 0 ? 
-      (product.images.find(img => img.isMain)?.standard || product.images[0].standard) : 
-      '/images/placeholder.jpg');
+  const imageUrl = getImageUrl();
   
   return (
-    <div className="min-h-screen bg-gray-50 py-12">
+    <div className="bg-gray-50 min-h-screen py-8">
       <div className="container mx-auto px-4">
-        <div className="mb-8">
-          <Link 
-            href="/products"
-            className="text-blue-700 hover:text-blue-900 transition-colors flex items-center font-medium"
-          >
-            <svg 
-              className="w-5 h-5 mr-1" 
-              fill="none" 
-              stroke="currentColor" 
-              viewBox="0 0 24 24" 
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path 
-                strokeLinecap="round" 
-                strokeLinejoin="round" 
-                strokeWidth={2} 
-                d="M10 19l-7-7m0 0l7-7m-7 7h18" 
-              />
-            </svg>
-            Voltar para produtos
+        <div className="mb-6 flex items-center text-sm text-gray-600">
+          <Link href="/" className="hover:text-blue-600">
+            Home
           </Link>
+          <span className="mx-2">/</span>
+          <Link href="/products" className="hover:text-blue-600">
+            Produtos
+          </Link>
+          <span className="mx-2">/</span>
+          <span className="text-gray-400">
+            {product.name}
+          </span>
         </div>
         
         <div className="bg-white rounded-xl shadow-sm overflow-hidden">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-0">
             {/* Product Images - Left Side */}
             <div className="p-4 md:p-8 md:border-r border-gray-100">
-              <div className="relative aspect-square w-full rounded-lg overflow-hidden bg-gray-50 mb-4">
+              <div className="relative w-full h-[300px] sm:h-[400px] md:h-[500px] rounded-lg overflow-hidden bg-gray-50 mb-4">
                 {imageLoading && (
                   <div className="absolute inset-0 flex items-center justify-center bg-gray-50">
                     <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-700"></div>
                   </div>
                 )}
                 <Image
-                  src={currentImageUrl}
+                  src={imageUrl}
                   alt={product.name}
+                  className="object-cover"
                   fill
-                  className="object-contain"
+                  sizes="(max-width: 768px) 100vw, 50vw"
+                  priority
                   onLoadingComplete={() => setImageLoading(false)}
                 />
                 
@@ -145,30 +134,6 @@ export default function ProductPage() {
                   </div>
                 )}
               </div>
-              
-              {/* Thumbnails gallery */}
-              {product.images && product.images.length > 1 && (
-                <div className="flex gap-2 overflow-x-auto py-2 scrollbar-hide">
-                  {product.images.map((image, index) => (
-                    <div 
-                      key={index}
-                      className={`relative w-20 h-20 rounded-md cursor-pointer transition-all duration-200 ${
-                        selectedImage?.id === image.id 
-                          ? 'ring-2 ring-blue-600 ring-offset-2' 
-                          : 'opacity-70 hover:opacity-100'
-                      }`}
-                      onClick={() => handleSelectImage(image)}
-                    >
-                      <Image
-                        src={image.thumbnail || image.standard}
-                        alt={`${product.name} - imagem ${index + 1}`}
-                        fill
-                        className="object-contain rounded-md"
-                      />
-                    </div>
-                  ))}
-                </div>
-              )}
             </div>
             
             {/* Product Details - Right Side */}
@@ -224,25 +189,19 @@ export default function ProductPage() {
                 <h3 className="text-sm font-medium text-gray-500 uppercase">Precisa de ajuda?</h3>
                 
                 <div className="flex flex-col sm:flex-row gap-4">
-                  <Link 
-                    href={`https://wa.me/44999999999?text=${encodeURIComponent(`Olá, gostaria de informações sobre o produto "${product.name}" (ID: ${productId}).`)}`} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="flex-1"
+                  <button 
+                    onClick={() => setIsModalOpen(true)}
+                    className="bg-green-600 hover:bg-green-700 active:bg-green-800 text-white px-6 py-3 rounded-lg text-center transition duration-300 flex items-center justify-center flex-1 shadow-sm"
                   >
-                    <button className="w-full bg-green-600 hover:bg-green-700 active:bg-green-800 text-white px-6 py-3 rounded-lg text-center transition duration-300 flex items-center justify-center shadow-sm">
-                      <FaWhatsapp className="mr-2 text-xl" />
-                      Falar com um vendedor
-                    </button>
-                  </Link>
+                    <FaWhatsapp className="mr-2 text-xl" />
+                    Falar com vendedor
+                  </button>
                   
                   <button 
                     onClick={() => router.push('/products')}
                     className="bg-blue-700 hover:bg-blue-800 text-white px-6 py-3 rounded-lg text-center transition duration-300 flex items-center justify-center flex-1 shadow-sm"
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16m-7 6h7" />
-                    </svg>
+                    <FaWhatsapp className="mr-2 text-xl" />
                     Ver outros produtos
                   </button>
                 </div>
@@ -251,6 +210,8 @@ export default function ProductPage() {
           </div>
         </div>
       </div>
+      
+      <StoreSellerModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
     </div>
   );
 }
